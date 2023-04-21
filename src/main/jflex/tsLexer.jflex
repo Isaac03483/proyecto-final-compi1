@@ -6,7 +6,7 @@ java -jar jflex-full-1.9.0.jar /home/mio/Escritorio/2023/proyecto-final-compi1/s
 */
 
 import com.mio.typeSecure.compiler.Token;
-import static com.mio.server.compiler.parser.TSParserSym.*;
+import static com.mio.typeSecure.compiler.parser.TSParserSym.*;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 %%
 
 %public
-%class TypeSecureLexer
+%class TSLexer
 %unicode
 %line
 %column
@@ -54,11 +54,13 @@ import java.util.List;
 %eofval}
 %eofclose
 
-ENDLINE = \r|\n|\r\n
-WHITESPACE = {ENDLINE}|[ \t\f]
+END_LINE = \r|\n|\r\n
+WHITE_SPACE = {END_LINE}|[ \t\f]
 STRING_VALUE = (\"[^\"]*\") | (\'[^\']*\')
-SUM = "+"
+PLUS = "+"
+INCREMENT = "++"
 MINUS = "-"
+DECREMENT = "--"
 TIMES = "*"
 DIVIDE = "/"
 MOD = "%"
@@ -123,15 +125,404 @@ POW = "Math.pow"
 SQRT = "Math.sqrt"
 RANDOM = "Math.random()"
 INTEGER = 0 | [1-9][0-9]*
-DECIMAL = {ENTERO} \. [0-9]+
+NUMBER_VALUE = {INTEGER}|{INTEGER} \. [0-9]+
+BIGINT_VALUE = {INTEGER} "n"
 ID = [a-zA-Z_][a-zA-Z0-9_]*
-SYM = [#$~%½&¬!\|@·<>\?ºª]+
+SYM = [#$~%½¬@·\?ºª\[\]]+
 COMMENT = "//"[^\r\n]* | "/*" [^*]* ("*"[^/][^*]*)* "*/"
 
 %%
 
 <YYINITIAL>{
 
+    {WHITE_SPACE}       {;}
+    {COMMENT}           {;}
+    {INCREMENT}
+    {
+        return symbolWithoutValue(INCREMENT);
+    }
+    {DECREMENT}
+    {
+        return symbolWithoutValue(DECREMENT);
+    }
+    {PLUS}
+    {
+        return symbolWithoutValue(PLUS);
+    }
+    {MINUS}
+    {
+        return symbolWithoutValue(MINUS);
+    }
+    {TIMES}
+    {
+        return symbolWithoutValue(TIMES);
+
+    }
+    {DIVIDE}
+    {
+        return symbolWithoutValue(DIVIDE);
+    }
+    {MOD}
+    {
+        return symbolWithoutValue(MOD);
+    }
+    {LPAREN}
+    {
+        return symbolWithoutValue(LPAREN);
+
+    }
+    {RPAREN}
+    {
+        return symbolWithoutValue(RPAREN);
+
+    }
+    {COLON}
+    {
+        return symbolWithoutValue(COLON);
+
+    }
+    {SEMICOLON}
+    {
+        return symbolWithoutValue(SEMICOLON);
+
+    }
+    {EQUALS}
+    {
+        return symbolWithoutValue(EQUALS);
+
+    }
+
+    {NOT_EQUALS}
+    {
+        return symbolWithoutValue(NOT_EQUALS);
+
+    }
+
+    {NOT}
+    {
+        return symbolWithoutValue(NOT);
+
+    }
+    {GREATER_EQ}
+    {
+        return symbolWithoutValue(GREATER_EQ);
+
+    }
+
+    {LESS_EQ}
+    {
+        return symbolWithoutValue(LESS_EQ);
+
+    }
+    {LESS}
+    {
+        return symbolWithoutValue(LESS);
+
+    }
+    {GREATER}
+    {
+        return symbolWithoutValue(GREATER);
+
+    }
+    {ASSIGN}
+    {
+        return symbolWithoutValue(ASSIGN);
+
+    }
+    {AND}
+    {
+        return symbolWithoutValue(AND);
+
+    }
+    {OR}
+    {
+        return symbolWithoutValue(OR);
+
+    }
+    {COMMA}
+    {
+        return symbolWithoutValue(COMMA);
+
+    }
+
+    {DOT}
+    {
+        return symbolWithoutValue(DOT);
+
+    }
+    {LBRACE}
+    {
+        return symbolWithoutValue(LBRACE);
+
+    }
+    {RBRACE}
+    {
+        return symbolWithoutValue(RBRACE);
+
+    }
+    {TRUE}
+    {
+        return symbolWithoutValue(TRUE);
+
+    }
+
+    {FALSE}
+    {
+        return symbolWithoutValue(FALSE);
+
+    }
+    {NUMBER}
+    {
+        return symbolWithoutValue(NUMBER);
+
+    }
+    {BIGINT}
+    {
+        return symbolWithoutValue(BIGINT);
+
+    }
+    {STRING}
+    {
+        return symbolWithoutValue(STRING);
+
+    }
+
+    {BOOLEAN}
+    {
+        return symbolWithoutValue(BOOLEAN);
+
+    }
+
+    {VOID}
+    {
+        return symbolWithoutValue(VOID);
+    }
+    {UNDEFINED}
+    {
+        return symbolWithoutValue(UNDEFINED);
+
+    }
+
+    {CONST}
+    {
+        return symbolWithoutValue(CONST);
+
+    }
+    {LET}
+    {
+        return symbolWithoutValue(LET);
+
+    }
+    {NUMBER_FUN}
+    {
+        return symbolWithoutValue(NUMBER_FUN);
+
+    }
+    {BIGINT_FUN}
+    {
+        return symbolWithoutValue(BIGINT_FUN);
+
+    }
+    {STRING_FUN}
+    {
+        return symbolWithoutValue(STRING_FUN);
+
+    }
+    {BOOLEAN_FUN}
+    {
+        return symbolWithoutValue(BOOLEAN_FUN);
+
+    }
+    {LENGTH}
+    {
+        return symbolWithoutValue(LENGTH);
+
+    }
+
+    {CHAR_AT}
+    {
+        return symbolWithoutValue(CHAR_AT);
+
+    }
+    {LOWER}
+    {
+        return symbolWithoutValue(LOWER);
+
+    }
+    {UPPER}
+    {
+        return symbolWithoutValue(UPPER);
+
+    }
+
+    {CONCAT}
+    {
+        return symbolWithoutValue(CONCAT);
+
+    }
+
+    {CONSOLE_LOG}
+    {
+        return symbolWithoutValue(CONSOLE_LOG);
+
+    }
+
+    {IF}
+    {
+        return symbolWithoutValue(IF);
+
+    }
+
+    {ELSE}
+    {
+        return symbolWithoutValue(ELSE);
+
+    }
+
+    {FOR}
+    {
+        return symbolWithoutValue(FOR);
+
+    }
+
+    {WHILE}
+    {
+        return symbolWithoutValue(WHILE);
+
+    }
+    {DO}
+    {
+        return symbolWithoutValue(DO);
+
+    }
+
+    {BREAK}
+    {
+        return symbolWithoutValue(BREAK);
+
+    }
+    {CONTINUE}
+    {
+        return symbolWithoutValue(CONTINUE);
+
+    }
+
+    {FUNCTION}
+    {
+        return symbolWithoutValue(FUNCTION);
+
+    }
+
+    {RETURN}
+    {
+        return symbolWithoutValue(RETURN);
+
+    }
+
+    {E}
+    {
+        return symbolWithoutValue(E);
+
+    }
+
+    {PI}
+    {
+        return symbolWithoutValue(PI);
+
+    }
+
+    {SQRT_TWO}
+    {
+        return symbolWithoutValue(SQRT_TWO);
+
+    }
+    {ABS}
+    {
+        return symbolWithoutValue(ABS);
+
+    }
+
+    {CEIL}
+    {
+        return symbolWithoutValue(CEIL);
+
+    }
+
+    {COS}
+    {
+        return symbolWithoutValue(COS);
+
+
+    }
+
+    {SIN}
+    {
+        return symbolWithoutValue(SIN);
+
+    }
+
+    {TAN}
+    {
+        return symbolWithoutValue(TAN);
+
+    }
+    {EXP}
+    {
+        return symbolWithoutValue(EXP);
+
+    }
+
+    {FLOOR}
+    {
+        return symbolWithoutValue(FLOOR);
+
+    }
+
+    {POW}
+    {
+        return symbolWithoutValue(POW);
+
+    }
+
+    {SQRT}
+    {
+        return symbolWithoutValue(SQRT);
+
+    }
+
+    {RANDOM}
+    {
+        return symbolWithoutValue(RANDOM);
+
+    }
+
+    {ID}
+    {
+        return symbolWithValue(ID, yytext());
+
+    }
+
+    {NUMBER_VALUE}
+    {
+        return symbolWithValue(NUMBER_VALUE, yytext());
+
+    }
+    {BIGINT_VALUE}
+    {
+        return symbolWithValue(BIGINT_VALUE, yytext());
+
+    }
+    {STRING_VALUE}
+    {
+        return symbolWithValue(ID, yytext().substring(1, yytext().length()-2));
+
+    }
+
+    {SYM}
+    {
+        return symbolWithValue(SYM, yytext());
+
+    }
 
 }
 

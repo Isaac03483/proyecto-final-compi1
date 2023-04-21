@@ -1,0 +1,34 @@
+package com.mio.typeSecure.compiler.parser;
+
+import com.mio.typeSecure.compiler.lexer.TSLexer;
+
+
+class TSParser;
+/*
+ java -jar java-cup-11b.jar /home/mio/Escritorio/2023/proyecto-final-compi1/src/main/cup/tsParser.cup
+*/
+parser code {:
+
+    public TSParser(TSLexer lexer){
+        super(lexer);
+
+    }
+:}
+
+
+terminal Token INCREMENT, DECREMENT, PLUS, MINUS, TIMES, DIVIDE, MOD, LPAREN, RPAREN, COLON, SEMICOLON;
+terminal Token EQUALS, NOT_EQUALS, NOT, GREATER_EQ, LESS_EQ, LESS, GREATER, ASSIGN, AND, OR, COMMA, DOT;
+terminal Token LBRACE, RBRACE, TRUE, FALSE, NUMBER, BIGINT, STRING, BOOLEAN, VOID, UNDEFINED, CONST, LET;
+terminal Token NUMBER_FUN, BIGINT_FUN, STRING_FUN, BOOLEAN_FUN, LENGTH, CHAR_AT, LOWER, UPPER, CONCAT;
+terminal Token CONSOLE_LOG, IF, ELSE, FOR, WHILE, DO, BREAK, CONTINUE, FUNCTION, RETURN, E, PI, SQRT_TWO;
+terminal Token ABS, CEIL, COS, SIN, TAN, EXP, FLOOR, POW, SQRT, RANDOM, ID, NUMBER_VALUE, BIGINT_VALUE;
+terminal Token STRING_VALUE, SYM;
+
+non terminal main;
+
+start with main;
+
+
+main
+::=
+;
