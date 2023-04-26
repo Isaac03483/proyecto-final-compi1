@@ -24,11 +24,220 @@ terminal Token CONSOLE_LOG, IF, ELSE, FOR, WHILE, DO, BREAK, CONTINUE, FUNCTION,
 terminal Token ABS, CEIL, COS, SIN, TAN, EXP, FLOOR, POW, SQRT, RANDOM, ID, NUMBER_VALUE, BIGINT_VALUE;
 terminal Token STRING_VALUE, SYM;
 
-non terminal main;
+non terminal main, statements, statement, funInstruction, instructions, parameters, parameter,type,instruction;
+non terminal declarationInstruction, assignmentInstruction, ifInstruction, forInstruction, whileInstruction;
+non terminal doWhileInstruction,elseIfInstruction,assignmentInDec,declarationList,varType,castFun, stringProd;
+non terminal stringFun,idType,inDecInstruction, callFunction, ids,consoleInstruction,a,b,c,d,w,x,y,z;
+non terminal continueInstruction, breakInstruction, returnInstruction;
 
 start with main;
 
 
 main
-::=
-;
+::= instructions
+	;
+	
+instructions
+::=	instructions instruction
+    |
+	;
+	
+parameters
+::=	parameters COMMA parameter
+	| parameter
+	;
+	
+parameter
+::=	ID COLON type
+	;
+	
+type
+::=	NUMBER
+	| BIGINT
+	| STRING
+	| BOOLEAN
+	;
+	
+
+	
+instruction
+::=	declarationInstruction SEMICOLON
+    | funInstruction
+	| assignmentInstruction SEMICOLON
+	| ifInstruction
+	| forInstruction
+	| whileInstruction
+	| doWhileInstruction
+	| inDecInstruction SEMICOLON
+	| callFunction SEMICOLON
+	| consoleInstruction SEMICOLON
+	| continueInstruction SEMICOLON
+	| breakInstruction SEMICOLON
+	| returnInstruction SEMICOLON
+	;
+
+funInstruction
+::=	FUNCTION ID LPAREN parameters RPAREN LBRACE instructions RBRACE
+	| FUNCTION ID LPAREN RPAREN LBRACE instructions RBRACE
+	;
+	
+	
+ifInstruction
+::=	IF LPAREN w RPAREN LBRACE instructions RBRACE
+	| IF LPAREN w RPAREN LBRACE instructions RBRACE elseIfInstruction
+	;
+	
+elseIfInstruction
+::=	ELSE ifInstruction
+	| ELSE LBRACE instructions RBRACE
+	;
+
+forInstruction
+::=	FOR LPAREN declarationInstruction SEMICOLON w SEMICOLON assignmentInDec RPAREN LBRACE instructions RBRACE
+	| FOR LPAREN assignmentInstruction SEMICOLON w SEMICOLON assignmentInDec RPAREN LBRACE instructions RBRACE
+	;
+
+assignmentInDec
+::= inDecInstruction
+    | assignmentInstruction
+    ;
+
+inDecInstruction
+::=	| ID INCREMENT
+	| ID DECREMENT
+	;
+
+whileInstruction
+::=	WHILE LPAREN w RPAREN LBRACE instructions RBRACE
+	;
+	
+doWhileInstruction
+::=	DO LBRACE instructions RBRACE WHILE LPAREN w RPAREN SEMICOLON
+    ;
+	
+declarationInstruction
+::=	varType declarationList
+	;
+	
+declarationList
+::=	declarationList COMMA ID idType ASSIGN w
+	| declarationList COMMA ID idType
+	| ID idType
+	| ID idType ASSIGN w
+	;
+	
+idType
+::=	COLON type
+	|
+	;
+	
+varType
+::=	LET
+	| CONST
+	;
+	
+assignmentInstruction
+::=	ID ASSIGN w
+	;
+
+callFunction
+::= ID LPAREN ids RPAREN
+    | ID LPAREN RPAREN
+    ;
+
+ids
+::= ids COMMA w
+    | w
+    ;
+
+consoleInstruction
+::= CONSOLE_LOG LPAREN ids RPAREN
+    ;
+
+continueInstruction
+::= CONTINUE
+    ;
+
+breakInstruction
+::= BREAK
+    ;
+
+returnInstruction
+::= RETURN
+    | RETURN w
+    ;
+
+w
+::=	w OR x
+	| x
+	;
+	
+x
+::=	x AND y
+	| y
+	;
+
+y
+::= NOT z
+    | z
+    ;
+
+z
+::=	z EQUALS a
+	| z NOT_EQUALS a
+	| z LESS a
+	| z GREATER a
+	| z LESS_EQ a
+	| z GREATER_EQ a
+	| a
+	;
+	
+a
+::=	a PLUS b
+	| a MINUS b
+	| b
+	;
+	
+b
+::=	b TIMES c
+	| b DIVIDE c
+	| b MOD c
+	| c
+	;
+
+c
+::=	castFun LPAREN a RPAREN
+	| d
+	;
+	
+d
+::=	NUMBER_VALUE
+	| BIGINT_VALUE
+	| TRUE
+	| FALSE
+    | STRING_VALUE DOT stringFun
+    {:System.out.println("Entrando a string con dot");:}
+	| STRING_VALUE
+    {:System.out.println("Entrando a string");:}
+	| ID
+	| ID DOT stringFun
+	| callFunction
+	| LPAREN a RPAREN
+	;
+	
+castFun
+::=	NUMBER_FUN
+	| BIGINT_FUN
+	| STRING_FUN
+	| BOOLEAN_FUN
+	;
+	
+stringFun
+::=	LENGTH
+	| CHAR_AT LPAREN a RPAREN
+	| LOWER LPAREN RPAREN
+	| UPPER LPAREN RPAREN
+	| CONCAT LPAREN a RPAREN
+	;
+
+

@@ -26,11 +26,13 @@ import java.util.List;
 %{
 
     private Symbol symbolWithValue(int type, Object value){
+        System.out.println("Encontre: "+value.toString()+" "+TSParserSym.terminalNames[type]);
         return new Symbol(type, new Token(type, value.toString(), yyline+1, yycolumn+1 ));
     }
 
     private Symbol symbolWithoutValue(int type){
-        return new Symbol(type, new Token(type, null, yyline+1, yycolumn+1 );
+        System.out.println("Encontre: "+TSParserSym.terminalNames[type]);
+        return new Symbol(type, new Token(type, null, yyline+1, yycolumn+1 ));
     }
 
 %}
@@ -56,7 +58,6 @@ import java.util.List;
 
 END_LINE = \r|\n|\r\n
 WHITE_SPACE = {END_LINE}|[ \t\f]
-STRING_VALUE = (\"[^\"]*\") | (\'[^\']*\')
 PLUS = "+"
 INCREMENT = "++"
 MINUS = "-"
@@ -127,6 +128,7 @@ RANDOM = "Math.random()"
 INTEGER = 0 | [1-9][0-9]*
 NUMBER_VALUE = {INTEGER}|{INTEGER} \. [0-9]+
 BIGINT_VALUE = {INTEGER} "n"
+STRING_VALUE = (\"[^\"]*\") | (\'[^\']*\')
 ID = [a-zA-Z_][a-zA-Z0-9_]*
 SYM = [#$~%½¬@·\?ºª\[\]]+
 COMMENT = "//"[^\r\n]* | "/*" [^*]* ("*"[^/][^*]*)* "*/"
@@ -514,7 +516,7 @@ COMMENT = "//"[^\r\n]* | "/*" [^*]* ("*"[^/][^*]*)* "*/"
     }
     {STRING_VALUE}
     {
-        return symbolWithValue(ID, yytext().substring(1, yytext().length()-2));
+        return symbolWithValue(ID, yytext().substring(1, yytext().length()-1));
 
     }
 

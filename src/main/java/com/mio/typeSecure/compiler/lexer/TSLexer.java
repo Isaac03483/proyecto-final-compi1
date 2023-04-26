@@ -11,6 +11,8 @@ java -jar jflex-full-1.9.0.jar /home/mio/Escritorio/2023/proyecto-final-compi1/s
 
 import com.mio.typeSecure.compiler.Token;
 import static com.mio.typeSecure.compiler.parser.TSParserSym.*;
+
+import com.mio.typeSecure.compiler.parser.TSParserSym;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import java.util.List;
@@ -470,10 +472,12 @@ public class TSLexer implements java_cup.runtime.Scanner {
   /* user code: */
 
     private Symbol symbolWithValue(int type, Object value){
+        System.out.println("Encontre: "+value.toString()+" "+ TSParserSym.terminalNames[type]);
         return new Symbol(type, new Token(type, value.toString(), yyline+1, yycolumn+1 ));
     }
 
     private Symbol symbolWithoutValue(int type){
+        System.out.println("Encontre: "+TSParserSym.terminalNames[type]);
         return new Symbol(type, new Token(type, null, yyline+1, yycolumn+1 ));
     }
 
@@ -1019,7 +1023,7 @@ public class TSLexer implements java_cup.runtime.Scanner {
           // fall through
           case 97: break;
           case 24:
-            { return symbolWithValue(ID, yytext().substring(1, yytext().length()-2));
+            { return symbolWithValue(ID, yytext().substring(1, yytext().length()-1));
             }
           // fall through
           case 98: break;

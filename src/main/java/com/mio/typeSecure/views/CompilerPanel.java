@@ -4,6 +4,8 @@
  */
 package com.mio.typeSecure.views;
 
+import com.mio.typeSecure.controllers.CompilerController;
+import com.mio.typeSecure.controllers.TSParserController;
 import com.mio.typeSecure.utils.LineNumber;
 
 import javax.swing.*;
@@ -23,6 +25,8 @@ public class CompilerPanel extends javax.swing.JPanel {
         initComponents();
         lineNumber = new LineNumber(this.inputArea);
         jScrollPane1.setRowHeaderView(lineNumber);
+        this.controller = new CompilerController(new TSParserController());
+        inputArea.setTabSize(1);
 
     }
 
@@ -55,6 +59,11 @@ public class CompilerPanel extends javax.swing.JPanel {
 
         compilerButton.setBackground(new java.awt.Color(0, 204, 102));
         compilerButton.setText("Compilar");
+        compilerButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                compilerButtonActionPerformed(evt);
+            }
+        });
 
         inputArea.setBackground(new java.awt.Color(102, 102, 102));
         inputArea.setColumns(20);
@@ -116,6 +125,11 @@ public class CompilerPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_inputAreaKeyReleased
 
+    private void compilerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_compilerButtonActionPerformed
+        // TODO add your handling code here:
+        controller.compile(this.inputArea.getText());
+    }//GEN-LAST:event_compilerButtonActionPerformed
+
     public JTextArea getInputArea() {
         return inputArea;
     }
@@ -128,4 +142,6 @@ public class CompilerPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lineColText;
     private javax.swing.JTextArea outputArea;
     // End of variables declaration//GEN-END:variables
+
+    private CompilerController controller;
 }
