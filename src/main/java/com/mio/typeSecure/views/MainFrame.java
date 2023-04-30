@@ -4,7 +4,11 @@
  */
 package com.mio.typeSecure.views;
 
+import com.mio.typeSecure.controllers.MainController;
+
 import javax.swing.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  *
@@ -20,7 +24,10 @@ public class MainFrame extends javax.swing.JFrame {
     public MainFrame() {
         initComponents();
         this.setLocationRelativeTo(null);
+        mainController = new MainController(this);
     }
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -37,6 +44,7 @@ public class MainFrame extends javax.swing.JFrame {
         saveButton = new javax.swing.JButton();
         newFileButton = new javax.swing.JButton();
         filesTabbedPane = new javax.swing.JTabbedPane();
+        openButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -74,6 +82,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
+        openButton.setBackground(new java.awt.Color(0, 204, 102));
+        openButton.setText("Abrir Archivo");
+        openButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout PaneLayout = new javax.swing.GroupLayout(Pane);
         Pane.setLayout(PaneLayout);
         PaneLayout.setHorizontalGroup(
@@ -81,7 +97,9 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(PaneLayout.createSequentialGroup()
                 .addGroup(PaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(PaneLayout.createSequentialGroup()
-                        .addContainerGap(391, Short.MAX_VALUE)
+                        .addContainerGap(270, Short.MAX_VALUE)
+                        .addComponent(openButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(newFileButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(saveButton)
@@ -100,7 +118,8 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(closeButton)
                     .addComponent(saveAsButton)
                     .addComponent(saveButton)
-                    .addComponent(newFileButton))
+                    .addComponent(newFileButton)
+                    .addComponent(openButton))
                 .addGap(18, 18, 18)
                 .addComponent(filesTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 560, Short.MAX_VALUE)
                 .addContainerGap())
@@ -149,12 +168,28 @@ public class MainFrame extends javax.swing.JFrame {
         this.filesTabbedPane.remove(this.filesTabbedPane.getSelectedComponent());
     }//GEN-LAST:event_closeButtonActionPerformed
 
+    private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
+        // TODO add your handling code here:
+        File file = mainController.findFile();
+        CompilerPanel compilerPanel = new CompilerPanel();
+        try {
+            compilerPanel.setFileInfo(file, mainController.readFile(file));
+            this.filesTabbedPane.addTab(file.getName(), compilerPanel);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+    }//GEN-LAST:event_openButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel Pane;
     private javax.swing.JButton closeButton;
     private javax.swing.JTabbedPane filesTabbedPane;
     private javax.swing.JButton newFileButton;
+    private javax.swing.JButton openButton;
     private javax.swing.JButton saveAsButton;
     private javax.swing.JButton saveButton;
     // End of variables declaration//GEN-END:variables
+
+    private MainController mainController;
 }

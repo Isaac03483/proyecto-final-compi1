@@ -22,13 +22,13 @@ terminal Token LBRACE, RBRACE, TRUE, FALSE, NUMBER, BIGINT, STRING, BOOLEAN, VOI
 terminal Token NUMBER_FUN, BIGINT_FUN, STRING_FUN, BOOLEAN_FUN, LENGTH, CHAR_AT, LOWER, UPPER, CONCAT;
 terminal Token CONSOLE_LOG, IF, ELSE, FOR, WHILE, DO, BREAK, CONTINUE, FUNCTION, RETURN, E, PI, SQRT_TWO;
 terminal Token ABS, CEIL, COS, SIN, TAN, EXP, FLOOR, POW, SQRT, RANDOM, ID, NUMBER_VALUE, BIGINT_VALUE;
-terminal Token STRING_VALUE, SYM;
+terminal Token STRING_VALUE, SYM, PRINT_AST, SYMBOL_TABLE;
 
-non terminal main, statements, statement, funInstruction, instructions, parameters, parameter,type,instruction;
+non terminal main, funInstruction, instructions, parameters, parameter,type,instruction;
 non terminal declarationInstruction, assignmentInstruction, ifInstruction, forInstruction, whileInstruction;
-non terminal doWhileInstruction,elseIfInstruction,assignmentInDec,declarationList,varType,castFun, stringProd;
+non terminal doWhileInstruction,elseIfInstruction,assignmentInDec,declarationList,varType,castFun;
 non terminal stringFun,idType,inDecInstruction, callFunction, ids,consoleInstruction,a,b,c,d,w,x,y,z;
-non terminal continueInstruction, breakInstruction, returnInstruction;
+non terminal continueInstruction, breakInstruction, returnInstruction, returnType, mathFun, mathConst;
 
 start with main;
 
@@ -77,9 +77,18 @@ instruction
 	;
 
 funInstruction
-::=	FUNCTION ID LPAREN parameters RPAREN LBRACE instructions RBRACE
-	| FUNCTION ID LPAREN RPAREN LBRACE instructions RBRACE
+::=	FUNCTION ID LPAREN parameters RPAREN returnType LBRACE instructions RBRACE
+	| FUNCTION ID LPAREN RPAREN returnType LBRACE instructions RBRACE
 	;
+
+returnType
+::= COLON VOID
+    | COLON NUMBER
+    | COLON BIGINT
+    | COLON STRING
+    | COLON BOOLEAN
+    |
+    ;
 	
 	
 ifInstruction
@@ -143,6 +152,7 @@ assignmentInstruction
 callFunction
 ::= ID LPAREN ids RPAREN
     | ID LPAREN RPAREN
+    | mathFun
     ;
 
 ids
@@ -222,6 +232,7 @@ d
 	| ID
 	| ID DOT stringFun
 	| callFunction
+	| mathConst
 	| LPAREN a RPAREN
 	;
 	
@@ -240,4 +251,22 @@ stringFun
 	| CONCAT LPAREN a RPAREN
 	;
 
+mathFun
+::= ABS LPAREN a RPAREN
+    | CEIL LPAREN a RPAREN
+    | COS LPAREN a RPAREN
+    | SIN LPAREN a RPAREN
+    | TAN LPAREN a RPAREN
+    | EXP LPAREN a RPAREN
+    | FLOOR LPAREN a RPAREN
+    | POW LPAREN a COMMA a RPAREN
+    | SQRT LPAREN a RPAREN
+    | RANDOM LPAREN RPAREN
+    ;
+
+mathConst
+::= E
+    | PI
+    | SQRT_TWO
+    ;
 

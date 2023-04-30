@@ -56,6 +56,7 @@ public class TSParserSym {
   public static final int BREAK = 52;
   public static final int DOT = 24;
   public static final int NUMBER_FUN = 37;
+  public static final int PRINT_AST = 74;
   public static final int LENGTH = 41;
   public static final int SQRT_TWO = 58;
   public static final int PI = 57;
@@ -76,6 +77,7 @@ public class TSParserSym {
   public static final int ABS = 59;
   public static final int COLON = 11;
   public static final int SQRT = 67;
+  public static final int SYMBOL_TABLE = 75;
   public static final int STRING = 31;
   public static final int LESS = 18;
   public static final int UPPER = 44;
@@ -156,7 +158,9 @@ public class TSParserSym {
   "NUMBER_VALUE",
   "BIGINT_VALUE",
   "STRING_VALUE",
-  "SYM"
+  "SYM",
+  "PRINT_AST",
+  "SYMBOL_TABLE"
   };
 }
 

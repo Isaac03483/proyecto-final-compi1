@@ -7,9 +7,9 @@ java -jar jflex-full-1.9.0.jar /home/mio/Escritorio/2023/proyecto-final-compi1/s
 
 import com.mio.typeSecure.compiler.Token;
 import static com.mio.typeSecure.compiler.parser.TSParserSym.*;
+
+import com.mio.typeSecure.compiler.parser.TSParserSym;
 import java_cup.runtime.Symbol;
-import java.util.ArrayList;
-import java.util.List;
 
 
 
@@ -103,6 +103,8 @@ LOWER = "toLowerCase"
 UPPER = "toUpperCase"
 CONCAT = "concat"
 CONSOLE_LOG = "console.log"
+SYMBOL_TABLE = "getSymbolTable()"
+PRINT_AST = "printAst"
 IF = "if"
 ELSE = "else"
 FOR = "for"
@@ -139,6 +141,14 @@ COMMENT = "//"[^\r\n]* | "/*" [^*]* ("*"[^/][^*]*)* "*/"
 
     {WHITE_SPACE}       {;}
     {COMMENT}           {;}
+    {PRINT_AST}
+    {
+        return symbolWithoutValue(PRINT_AST);
+    }
+    {SYMBOL_TABLE}
+    {
+        return symbolWithoutValue(SYMBOL_TABLE);
+    }
     {INCREMENT}
     {
         return symbolWithoutValue(INCREMENT);

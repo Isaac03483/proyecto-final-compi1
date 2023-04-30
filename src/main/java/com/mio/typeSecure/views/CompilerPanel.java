@@ -10,6 +10,8 @@ import com.mio.typeSecure.utils.LineNumber;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
+import java.awt.event.KeyEvent;
+import java.io.File;
 
 /**
  *
@@ -17,7 +19,7 @@ import javax.swing.text.BadLocationException;
  */
 public class CompilerPanel extends javax.swing.JPanel {
 
-    LineNumber lineNumber;
+
     /**
      * Creates new form CompilerPanel
      */
@@ -28,6 +30,13 @@ public class CompilerPanel extends javax.swing.JPanel {
         this.controller = new CompilerController(new TSParserController());
         inputArea.setTabSize(1);
 
+    }
+
+    public void setFileInfo(File file, String content){
+        this.fileName = file.getName();
+        this.filePath = file.getAbsolutePath();
+        this.content = content;
+        this.inputArea.setText(content);
     }
 
 
@@ -120,6 +129,7 @@ public class CompilerPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
         try {
             count();
+
         } catch (BadLocationException e) {
             System.err.println("Something went wrong");
         }
@@ -144,4 +154,8 @@ public class CompilerPanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     private CompilerController controller;
+    private LineNumber lineNumber;
+    private String filePath;
+    private String fileName;
+    private String content;
 }
