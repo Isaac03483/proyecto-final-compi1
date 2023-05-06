@@ -12,6 +12,7 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.List;
 
 /**
  *
@@ -137,7 +138,12 @@ public class CompilerPanel extends javax.swing.JPanel {
 
     private void compilerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_compilerButtonActionPerformed
         // TODO add your handling code here:
-        controller.compile(this.inputArea.getText());
+        this.outputArea.setText("");
+        List<String> out = controller.compile(this.inputArea.getText());
+        out.forEach(o ->{
+            this.outputArea.append(o);
+            this.outputArea.append("\n");
+        });
     }//GEN-LAST:event_compilerButtonActionPerformed
 
     public JTextArea getInputArea() {

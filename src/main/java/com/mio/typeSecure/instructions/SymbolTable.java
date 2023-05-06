@@ -3,11 +3,12 @@ package com.mio.typeSecure.instructions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SymbolTable {
+public class SymbolTable implements Cloneable{
 
     private List<Variable> variableList;
 
     private  SymbolTable parent;
+    private static List<Function> functions;
 
     public SymbolTable(SymbolTable parent) {
         this.parent = parent;
@@ -31,4 +32,12 @@ public class SymbolTable {
     }
 
 
+    @Override
+    public SymbolTable clone() {
+        try {
+            return (SymbolTable) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
 }

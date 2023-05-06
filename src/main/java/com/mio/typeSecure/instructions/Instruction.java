@@ -3,6 +3,7 @@ package com.mio.typeSecure.instructions;
 import com.mio.typeSecure.utils.Error;
 
 import java.util.List;
+import java.util.Objects;
 
 public abstract class Instruction {
 
@@ -14,7 +15,7 @@ public abstract class Instruction {
         this.column = column;
     }
 
-    public abstract Variable run(SymbolTable symbolTable);
+    public abstract Object run(SymbolTable symbolTable);
 
-    public abstract Variable debug(SymbolTable symbolTable, List<Error> errorList);
+    public abstract Object debug(SymbolTable symbolTable, List<Error> errorList);
 }

@@ -1,5 +1,5 @@
 package com.mio.typeSecure.instructions;
 
-public enum FunctionType {
+public enum ReturnType {
     STRING, VOID, NUMBER, BIG_INT, BOOLEAN
 }

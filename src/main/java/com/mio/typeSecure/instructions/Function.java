@@ -9,18 +9,27 @@ public class Function extends Instruction{
     private String id;
     private List<Parameter> parameters;
     private List<Instruction> instructions;
-    private FunctionType functionType;
+    private ReturnType returnType;
+    private SymbolTable symbolTable;
 
-    public Function(int line, int column, String id, List<Parameter> parameters, List<Instruction> instructions, FunctionType functionType) {
+    public Function(int line, int column, String id, List<Parameter> parameters, List<Instruction> instructions, ReturnType returnType) {
         super(line, column);
         this.id = id;
         this.parameters = parameters;
         this.instructions = instructions;
-        this.functionType = functionType;
+        this.returnType = returnType;
+    }
+
+    public Function(int line, int column, String id, List<Parameter> parameters, List<Instruction> instructions) {
+        super(line, column);
+        this.id = id;
+        this.parameters = parameters;
+        this.instructions = instructions;
     }
 
     @Override
     public Variable run(SymbolTable symbolTable) {
+        this.symbolTable = symbolTable.clone();
         return null;
     }
 

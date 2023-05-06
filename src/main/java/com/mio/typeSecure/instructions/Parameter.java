@@ -2,7 +2,7 @@ package com.mio.typeSecure.instructions;
 
 import java.util.Objects;
 
-public record Parameter(String id, VariableType variableType) {
+public record Parameter(String id, VariableType variableType){
 
     @Override
     public boolean equals(Object o) {

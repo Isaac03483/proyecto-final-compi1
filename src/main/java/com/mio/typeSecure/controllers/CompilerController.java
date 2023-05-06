@@ -1,5 +1,7 @@
 package com.mio.typeSecure.controllers;
 
+import java.util.List;
+
 public class CompilerController {
 
     private final TSParserController controller;
@@ -8,7 +10,7 @@ public class CompilerController {
         this.controller = controller;
     }
 
-    public void compile(String input){
-        controller.compile(input);
+    public List<String> compile(String input){
+        return controller.compile(input);
     }
 }

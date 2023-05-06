@@ -14,12 +14,13 @@ public class Return extends Instruction{
     }
 
     @Override
-    public Variable run(SymbolTable symbolTable) {
+    public Instruction run(SymbolTable symbolTable) {
         return null;
     }
 
     @Override
-    public Variable debug(SymbolTable symbolTable, List<Error> errorList) {
-        return null;
+    public Instruction debug(SymbolTable symbolTable, List<Error> errorList) {
+
+        return this;
     }
 }

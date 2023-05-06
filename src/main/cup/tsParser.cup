@@ -1,6 +1,10 @@
 package com.mio.typeSecure.compiler.parser;
 
+import com.mio.typeSecure.compiler.Token;
 import com.mio.typeSecure.compiler.lexer.TSLexer;
+import java_cup.runtime.Symbol;
+
+import java.util.List;
 
 
 class TSParser;
@@ -9,9 +13,65 @@ class TSParser;
 */
 parser code {:
 
-    public TSParser(TSLexer lexer){
+    private List<String> errorList;
+    public TSParser(TSLexer lexer, List<String> errorList){
         super(lexer);
+        this.errorList = errorList;
 
+    }
+
+    public Symbol scan() throws Exception {
+        Symbol symbol = this.getScanner().next_token();
+        if (symbol == null) {
+            return this.getSymbolFactory().newSymbol("END_OF_FILE", this.EOF_sym());
+        }
+
+        while(symbol != null && symbol.sym == TSParserSym.SYM) {
+            this.report_expected_token_ids();
+            Token token = (Token) symbol.value;
+            errorList.add("Simbolo no forma parte del lenguaje: "+token.value()+", Linea: "+token.line()+" Columna: "+token.column());
+            symbol = this.getScanner().next_token();
+        }
+
+        if (symbol == null) {
+            return this.getSymbolFactory().newSymbol("END_OF_FILE", this.EOF_sym());
+        }
+
+        return symbol;
+    }
+
+    public void report_error(String message, Object info) {
+        System.out.println("public void report_error");
+    }
+
+    public void report_fatal_error(String message, Object info) {
+        System.out.println("public void report_fatal_error");
+    }
+
+    public void syntax_error(Symbol cur_token) {
+        Token token = (Token) cur_token.value;
+
+
+        if (cur_token.sym == TSParserSym.EOF) {
+            errorList.add("Simbolo no esperado. Linea: "+token.line()+" Columna: "+token.column());
+        } else {
+            String tokenVal = token.value() == null? TSParserSym.terminalNames[token.type()]: token.value();
+            errorList.add("Simbolo no esperado: "+tokenVal+" Linea: "+token.line()+" Columna: "+token.column());
+
+        }
+    }
+
+    public void unrecovered_syntax_error(Symbol cur_token) {
+        Token token = (Token) cur_token.value;
+
+        if (cur_token.sym == TSParserSym.EOF) {
+            errorList.add("Simbolo no esperado. Linea: "+token.line()+" Columna: "+token.column());
+
+        } else {
+            String tokenVal = token.value() == null? TSParserSym.terminalNames[token.type()]: token.value();
+            errorList.add("Simbolo no esperado: "+tokenVal+" Linea: "+token.line()+" Columna: "+token.column());
+
+        }
     }
 :}
 
@@ -24,38 +84,50 @@ terminal Token CONSOLE_LOG, IF, ELSE, FOR, WHILE, DO, BREAK, CONTINUE, FUNCTION,
 terminal Token ABS, CEIL, COS, SIN, TAN, EXP, FLOOR, POW, SQRT, RANDOM, ID, NUMBER_VALUE, BIGINT_VALUE;
 terminal Token STRING_VALUE, SYM, PRINT_AST, SYMBOL_TABLE;
 
-non terminal main, funInstruction, instructions, parameters, parameter,type,instruction;
+non terminal List<Instruction> main;
+non terminal funInstruction, instructions, parameters, parameter,type,instruction;
 non terminal declarationInstruction, assignmentInstruction, ifInstruction, forInstruction, whileInstruction;
-non terminal doWhileInstruction,elseIfInstruction,assignmentInDec,declarationList,varType,castFun;
+non terminal doWhileInstruction,elseIfInstruction,assignmentInDec,declarationList,varType;
 non terminal stringFun,idType,inDecInstruction, callFunction, ids,consoleInstruction,a,b,c,d,w,x,y,z;
 non terminal continueInstruction, breakInstruction, returnInstruction, returnType, mathFun, mathConst;
+non terminal Token castFun;
 
 start with main;
 
 
 main
-::= instructions
+::= instructions:list
+    {:RESULT = list;:}
 	;
 	
 instructions
-::=	instructions instruction
+::=	instructions:list instruction:instruction
+    {:RESULT = list; RESULT.add(instruction);:}
     |
+    {:RESULT = new ArrayList<>();:}
 	;
 	
 parameters
-::=	parameters COMMA parameter
-	| parameter
+::=	parameters:list COMMA parameter:p
+    {:RESULT = list; RESULT.add(p);:}
+	| parameter:p
+	{:RESULT = new ArrayList<>(); RESULT.add(p);:}
 	;
 	
 parameter
-::=	ID COLON type
+::=	ID:id COLON type:variableType
+    {:RESULT = new Parameter();:}
 	;
 	
 type
 ::=	NUMBER
+	{:RESULT = VariableType.NUMBER:}
 	| BIGINT
+	{:RESULT = VariableType.BIG_INT:}
 	| STRING
+	{:RESULT = VariableType.STRING:}
 	| BOOLEAN
+	{:RESULT = VariableType.BOOLEAN:}
 	;
 	
 
@@ -74,6 +146,7 @@ instruction
 	| continueInstruction SEMICOLON
 	| breakInstruction SEMICOLON
 	| returnInstruction SEMICOLON
+	| error SEMICOLON
 	;
 
 funInstruction
@@ -150,31 +223,43 @@ assignmentInstruction
 	;
 
 callFunction
-::= ID LPAREN ids RPAREN
-    | ID LPAREN RPAREN
-    | mathFun
+::= ID:id LPAREN ids:ids RPAREN
+    {:RESULT = new CallFunction(id.line(), id.column(), id.value(), ids);:}
+    | ID:id LPAREN RPAREN
+    {:RESULT = new CallFunction(id.line(), id.column(), id.value(), null);:}
+    | mathFun:math
+    {:RESULT = math;:}
     ;
 
 ids
-::= ids COMMA w
-    | w
+::= ids:list COMMA w:val
+    {:RESULT = list; RESULT.add(val);:}
+    | w:val
+    {:RESULT = new ArrayList<>(); RESULT.add(val);:}
+    | error COMMA
     ;
 
 consoleInstruction
-::= CONSOLE_LOG LPAREN ids RPAREN
+::= CONSOLE_LOG:console LPAREN ids:ids RPAREN
+    {:RESULT = new ConsoleLog(console.line(), console.column(), ids);:}
+    | error RPAREN
     ;
 
 continueInstruction
-::= CONTINUE
+::= CONTINUE:cont
+    {:RESULT = new Continue(cont.line(), cont.column());:}
     ;
 
 breakInstruction
-::= BREAK
+::= BREAK:brk
+    {:RESULT = new Break(brk.line(), brk.column());:}
     ;
 
 returnInstruction
-::= RETURN
-    | RETURN w
+::= RETURN:rtn
+    {:RETURN = new Return(rtn.line(), rtn.column(), null);:}
+    | RETURN:rtn w:val
+    {:RETURN = new Return(rtn.line(), rtn.column(), val);:}
     ;
 
 w
@@ -189,7 +274,8 @@ x
 
 y
 ::= NOT z
-    | z
+    | z:val
+    {:RESULT = val;:}
     ;
 
 z
@@ -199,48 +285,97 @@ z
 	| z GREATER a
 	| z LESS_EQ a
 	| z GREATER_EQ a
-	| a
+	| a:val
+	{:RESULT = val;:}
 	;
 	
 a
 ::=	a PLUS b
 	| a MINUS b
-	| b
+	| b:val
+	{:RESULT = val;:}
 	;
 	
 b
-::=	b TIMES c
-	| b DIVIDE c
-	| b MOD c
-	| c
+::=	b:lft TIMES:tm c:rgt
+	{:RESULT = new BinaryOperation(tm.line(),tm.column(), lft, rgt, OperationType.TIMES);:}
+	| b:lft DIVIDE:dv c:rgt
+	{:RESULT = new BinaryOperation(dv.line(),dv.column(), lft, rgt, OperationType.DIVIDE);:}
+	| b:lft MOD:md c:rgt
+	{:RESULT = new BinaryOperation(md.line(),md.column(), lft, rgt, OperationType.MOD);:}
+	| c:val
+	{:RESULT = val;:}
 	;
 
 c
-::=	castFun LPAREN a RPAREN
+::=	castFun:cast LPAREN a:val RPAREN
+    {:
+    switch(cast.type()){
+        case NUMBER_VALUE -> {
+            RESULT = new Cast(cast.line(), cast.column(), val, CastType.CAST_NUM);
+        }
+        case BIGINT_VALUE -> {
+            RESULT = new Cast(cast.line(), cast.column(), val, CastType.CAST_BIG);
+        }
+        case BOOLEAN_VALUE -> {
+            RESULT = new Cast(cast.line(), cast.column(), val, CastType.CAST_BOOL);
+
+        }
+        case STRING_VALUE -> {
+            RESULT = new Cast(cast.line(), cast.column(), val, CastType.CAST_STRING);
+
+        }
+
+    }
+    :}
 	| d
+	{:RESULT = d;:}
 	;
 	
 d
-::=	NUMBER_VALUE
-	| BIGINT_VALUE
-	| TRUE
-	| FALSE
-    | STRING_VALUE DOT stringFun
-    {:System.out.println("Entrando a string con dot");:}
-	| STRING_VALUE
-    {:System.out.println("Entrando a string");:}
-	| ID
-	| ID DOT stringFun
-	| callFunction
-	| mathConst
-	| LPAREN a RPAREN
+::=	NUMBER_VALUE:number
+	{:RESULT = new Value(number.line(), number.column(), number.value(), ValueType.NUMBER_VALUE);:}
+
+	| BIGINT_VALUE:bigInt
+	{:RESULT = new Value(bigInt.line(), bigInt.column(), bigInt.value(), ValueType.BIG_INT_VALUE);:}
+
+	| TRUE:true
+	{:RESULT = new Value(true.line(), true.column(), "true", ValueType.BOOLEAN);:}
+
+	| FALSE:false
+	{:RESULT = new Value(false.line(), false.column(), "false", ValueType.BOOLEAN);:}
+
+    | STRING_VALUE:value DOT stringFun:stringFun
+	{:RESULT = stringFun; RESULT.setValue(value.value());:}
+
+	| STRING_VALUE:string
+	{:RESULT = new Value(string.line(), string.column(), string.value(), ValueType.STRING_VALUE);:}
+
+	| ID:id
+	{:RESULT = new Value(id.line(), id.column(), id.value(), ValueType.ID);:}
+
+	| ID:value DOT stringFun:stringFun
+	{:RESULT = stringFun; RESULT.setValue(value.value());:}
+
+	| callFunction:callFunction
+	{:RESULT = callFunction;:}
+
+	| mathConst:math
+	{:RESULT = math;:}
+
+	| LPAREN a:val RPAREN
+	{:RESULT = val;:}
 	;
 	
 castFun
-::=	NUMBER_FUN
-	| BIGINT_FUN
-	| STRING_FUN
-	| BOOLEAN_FUN
+::=	NUMBER_FUN:nbr
+	{:RESULT = nbr;:}
+	| BIGINT_FUN:bg
+	{:RESULT = bg;:}
+	| STRING_FUN:st
+	{:RESULT = st;:}
+	| BOOLEAN_FUN:bl
+	{:RESULT = bl;:}
 	;
 	
 stringFun
@@ -249,24 +384,39 @@ stringFun
 	| LOWER LPAREN RPAREN
 	| UPPER LPAREN RPAREN
 	| CONCAT LPAREN a RPAREN
+	| error RPAREN
 	;
 
 mathFun
-::= ABS LPAREN a RPAREN
-    | CEIL LPAREN a RPAREN
-    | COS LPAREN a RPAREN
-    | SIN LPAREN a RPAREN
-    | TAN LPAREN a RPAREN
-    | EXP LPAREN a RPAREN
-    | FLOOR LPAREN a RPAREN
-    | POW LPAREN a COMMA a RPAREN
-    | SQRT LPAREN a RPAREN
-    | RANDOM LPAREN RPAREN
+::= ABS:bs LPAREN ids:ids RPAREN
+    {:RESULT = new Math(bs.line(), bs.column(), MathType.ABS, ids;:}
+    | CEIL:cl LPAREN ids:ids RPAREN
+    {:RESULT = new Math(cl.line(), cl.column(), MathType.CEIL, ids;:}
+    | COS:cs LPAREN ids:ids RPAREN
+    {:RESULT = new Math(cs.line(), cs.column(), MathType.COS, ids;:}
+    | SIN:sn LPAREN ids:ids RPAREN
+    {:RESULT = new Math(sn.line(), sn.column(), MathType.SIN, ids;:}
+    | TAN:tn LPAREN ids:ids RPAREN
+    {:RESULT = new Math(tn.line(), tn.column(), MathType.TAN, ids;:}
+    | EXP:xp LPAREN ids:ids RPAREN
+    {:RESULT = new Math(xp.line(), xp.column(), MathType.EXP, ids;:}
+    | FLOOR:fr LPAREN ids:ids RPAREN
+    {:RESULT = new Math(fr.line(), fr.column(), MathType.FLOOR, ids;:}
+    | POW:pw LPAREN ids:dis RPAREN
+    {:RESULT = new Math(pw.line(), pw.column(), MathType.POW, ids;:}
+    | SQRT:srt LPAREN ids:ids RPAREN
+    {:RESULT = new Math(srt.line(), srt.column(), MathType.SQRT, ids;:}
+    | RANDOM:rm LPAREN RPAREN
+    {:RESULT = new Math(rm.line(), rm.column(), MathType.RANDOM, null);:}
+
     ;
 
 mathConst
-::= E
-    | PI
-    | SQRT_TWO
+::= E:e
+    {:RESULT = new Math(sqrt.line(), sqrt.column(), MathType.E, null);:}
+    | PI:pi
+    {:RESULT = new Math(sqrt.line(), sqrt.column(), MathType.PI, null);:}
+    | SQRT_TWO:sqrt
+    {:RESULT = new Math(sqrt.line(), sqrt.column(), MathType.SQRT_TWO, null);:}
     ;
 

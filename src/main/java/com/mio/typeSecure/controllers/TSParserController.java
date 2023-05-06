@@ -2,10 +2,11 @@ package com.mio.typeSecure.controllers;
 
 import com.mio.typeSecure.compiler.lexer.TSLexer;
 import com.mio.typeSecure.compiler.parser.TSParser;
+import com.mio.typeSecure.instructions.Instruction;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TSParserController {
 
@@ -13,14 +14,21 @@ public class TSParserController {
     public TSParserController() {
     }
 
-    public void compile(String input){
+    public List<String> compile(String input){
         TSLexer tsLexer = new TSLexer(new StringReader(input));
-        TSParser tsParser = new TSParser(tsLexer);
+        List<String> out = new ArrayList<>();
+        TSParser tsParser = new TSParser(tsLexer, out);
         try {
             tsParser.parse();
             System.out.println("Compilando...");
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
+
+        return out;
+    }
+
+    public void execute(List<Instruction> instructions, List<String> out){
+
     }
 }

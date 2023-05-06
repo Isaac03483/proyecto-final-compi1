@@ -10,7 +10,12 @@ public class BinaryOperation extends Instruction{
     private Instruction rightOperation;
     private OperationType operationType;
 
-    public BinaryOperation(int line, int column, Instruction leftOperation, Instruction rightOperation, OperationType operationType) {
+    public BinaryOperation(int line,
+                           int column,
+                           Instruction leftOperation,
+                           Instruction rightOperation,
+                           OperationType operationType) {
+
         super(line, column);
         this.leftOperation = leftOperation;
         this.rightOperation = rightOperation;
