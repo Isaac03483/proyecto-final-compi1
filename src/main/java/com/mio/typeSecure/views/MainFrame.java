@@ -17,7 +17,7 @@ import java.io.FileNotFoundException;
 public class MainFrame extends javax.swing.JFrame {
 
 
-    private final String DEFAULT_NAME = "file.ts";
+    public static final String DEFAULT_NAME = "file.ts";
     /**
      * Creates new form MainFrame
      */
@@ -147,30 +147,44 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
         // TODO add your handling code here:
+        CompilerPanel compilerPanel = (CompilerPanel) this.filesTabbedPane.getSelectedComponent();
+        String fileName = compilerPanel.getFileName() == null? DEFAULT_NAME: compilerPanel.getFilePath();
+        boolean result = this.mainController.save(fileName, compilerPanel.getInputArea().getText());
+
+        if(result){
+            JOptionPane.showMessageDialog(null, "El archivo se guardó con éxito.", "Información", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        JOptionPane.showMessageDialog(null, "No se pudo guardar el archivo.", "Información", JOptionPane.ERROR_MESSAGE);
+
     }//GEN-LAST:event_saveButtonActionPerformed
 
     private void saveAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsButtonActionPerformed
         // TODO add your handling code here:
+        CompilerPanel compilerPanel = (CompilerPanel) this.filesTabbedPane.getSelectedComponent();
+        boolean result = this.mainController.saveAs(compilerPanel.getInputArea().getText());
+
+        if(result){
+            JOptionPane.showMessageDialog(null, "El archivo se guardó con éxito.", "Información", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        JOptionPane.showMessageDialog(null, "No se pudo guardar el archivo.", "Información", JOptionPane.ERROR_MESSAGE);
+
     }//GEN-LAST:event_saveAsButtonActionPerformed
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
         // TODO add your handling code here:
-        CompilerPanel panel = (CompilerPanel) (this.filesTabbedPane.getSelectedComponent());
-
-        if(!panel.getInputArea().getText().trim().isEmpty()){
-            int option = JOptionPane.showConfirmDialog(null, "¿Desea guardar el archivo antes de borrar?","TypeSecure", JOptionPane.YES_NO_OPTION);
-            if(option == 0){
-                System.out.println("Guardando");
-
-            }
-        }
-
         this.filesTabbedPane.remove(this.filesTabbedPane.getSelectedComponent());
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
         // TODO add your handling code here:
         File file = mainController.findFile();
+
+        if(file == null) return;
+
         CompilerPanel compilerPanel = new CompilerPanel();
         try {
             compilerPanel.setFileInfo(file, mainController.readFile(file));
@@ -180,6 +194,8 @@ public class MainFrame extends javax.swing.JFrame {
         }
 
     }//GEN-LAST:event_openButtonActionPerformed
+
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel Pane;

@@ -2,10 +2,11 @@ package com.mio.typeSecure.compiler.parser;
 
 import com.mio.typeSecure.compiler.Token;
 import com.mio.typeSecure.compiler.lexer.TSLexer;
+import com.mio.typeSecure.models.TSError;
 import java_cup.runtime.Symbol;
-
+import java.util.ArrayList;
 import java.util.List;
-
+import com.mio.typeSecure.instructions.*;
 
 class TSParser;
 /*
@@ -13,10 +14,12 @@ class TSParser;
 */
 parser code {:
 
-    private List<String> errorList;
-    public TSParser(TSLexer lexer, List<String> errorList){
+    private List<TSError> errorList;
+    public List<Instruction> instructions;
+    public TSParser(List<Instruction> instructions, TSLexer lexer, List<TSError> errorList){
         super(lexer);
         this.errorList = errorList;
+        this.instructions=instructions;
 
     }
 
@@ -29,7 +32,9 @@ parser code {:
         while(symbol != null && symbol.sym == TSParserSym.SYM) {
             this.report_expected_token_ids();
             Token token = (Token) symbol.value;
-            errorList.add("Simbolo no forma parte del lenguaje: "+token.value()+", Linea: "+token.line()+" Columna: "+token.column());
+            errorList.add(
+                new TSError(token.line(), token.column(), "El simbolo: "+token.value()+" no forma parte del lenguaje.")
+            );
             symbol = this.getScanner().next_token();
         }
 
@@ -53,10 +58,11 @@ parser code {:
 
 
         if (cur_token.sym == TSParserSym.EOF) {
-            errorList.add("Simbolo no esperado. Linea: "+token.line()+" Columna: "+token.column());
+            errorList.add(new TSError(token.line(), token.column(), "Simbolo no esperado."));
+
         } else {
             String tokenVal = token.value() == null? TSParserSym.terminalNames[token.type()]: token.value();
-            errorList.add("Simbolo no esperado: "+tokenVal+" Linea: "+token.line()+" Columna: "+token.column());
+            errorList.add(new TSError(token.line(), token.column(), "Simbolo no esperado: "+tokenVal));
 
         }
     }
@@ -65,11 +71,12 @@ parser code {:
         Token token = (Token) cur_token.value;
 
         if (cur_token.sym == TSParserSym.EOF) {
-            errorList.add("Simbolo no esperado. Linea: "+token.line()+" Columna: "+token.column());
+            errorList.add(new TSError(token.line(), token.column(), "Simbolo no esperado."));
 
         } else {
             String tokenVal = token.value() == null? TSParserSym.terminalNames[token.type()]: token.value();
-            errorList.add("Simbolo no esperado: "+tokenVal+" Linea: "+token.line()+" Columna: "+token.column());
+            errorList.add(new TSError(token.line(), token.column(), "Simbolo no esperado: "+tokenVal));
+
 
         }
     }
@@ -84,12 +91,17 @@ terminal Token CONSOLE_LOG, IF, ELSE, FOR, WHILE, DO, BREAK, CONTINUE, FUNCTION,
 terminal Token ABS, CEIL, COS, SIN, TAN, EXP, FLOOR, POW, SQRT, RANDOM, ID, NUMBER_VALUE, BIGINT_VALUE;
 terminal Token STRING_VALUE, SYM, PRINT_AST, SYMBOL_TABLE;
 
-non terminal List<Instruction> main;
-non terminal funInstruction, instructions, parameters, parameter,type,instruction;
-non terminal declarationInstruction, assignmentInstruction, ifInstruction, forInstruction, whileInstruction;
-non terminal doWhileInstruction,elseIfInstruction,assignmentInDec,declarationList,varType;
-non terminal stringFun,idType,inDecInstruction, callFunction, ids,consoleInstruction,a,b,c,d,w,x,y,z;
-non terminal continueInstruction, breakInstruction, returnInstruction, returnType, mathFun, mathConst;
+non terminal List<Instruction> main,instructions,ids;
+non terminal List<Parameter> parameters;
+non terminal Parameter parameter;
+non terminal VariableType type;
+non terminal Instruction funInstruction,instruction;
+non terminal Instruction declarationInstruction, assignmentInstruction, ifInstruction, forInstruction, whileInstruction;
+non terminal Instruction doWhileInstruction,elseIfInstruction,assignmentInDec,declarationList,varType;
+non terminal Instruction idType,inDecInstruction, callFunction,consoleInstruction,a,b,c,d,w,x,y,z;
+non terminal Instruction continueInstruction, breakInstruction, returnInstruction, mathFun, mathConst;
+non terminal ReturnType returnType;
+non terminal StringInstruction stringFun;
 non terminal Token castFun;
 
 start with main;
@@ -104,7 +116,7 @@ instructions
 ::=	instructions:list instruction:instruction
     {:RESULT = list; RESULT.add(instruction);:}
     |
-    {:RESULT = new ArrayList<>();:}
+    {:RESULT = this.parser.instructions;:}
 	;
 	
 parameters
@@ -116,18 +128,18 @@ parameters
 	
 parameter
 ::=	ID:id COLON type:variableType
-    {:RESULT = new Parameter();:}
+    {:RESULT = new Parameter(id.value(), variableType);:}
 	;
 	
 type
 ::=	NUMBER
-	{:RESULT = VariableType.NUMBER:}
+	{:RESULT = VariableType.NUMBER;:}
 	| BIGINT
-	{:RESULT = VariableType.BIG_INT:}
+	{:RESULT = VariableType.BIG_INT;:}
 	| STRING
-	{:RESULT = VariableType.STRING:}
+	{:RESULT = VariableType.STRING;:}
 	| BOOLEAN
-	{:RESULT = VariableType.BOOLEAN:}
+	{:RESULT = VariableType.BOOLEAN;:}
 	;
 	
 
@@ -257,9 +269,9 @@ breakInstruction
 
 returnInstruction
 ::= RETURN:rtn
-    {:RETURN = new Return(rtn.line(), rtn.column(), null);:}
+    {:RESULT = new ReturnInstruction(rtn.line(), rtn.column(), null);:}
     | RETURN:rtn w:val
-    {:RETURN = new Return(rtn.line(), rtn.column(), val);:}
+    {:RESULT = new ReturnInstruction(rtn.line(), rtn.column(), val);:}
     ;
 
 w
@@ -308,27 +320,27 @@ b
 	;
 
 c
-::=	castFun:cast LPAREN a:val RPAREN
+::=	castFun:cast LPAREN w:val RPAREN
     {:
     switch(cast.type()){
-        case NUMBER_VALUE -> {
+        case TSParserSym.NUMBER_FUN -> {
             RESULT = new Cast(cast.line(), cast.column(), val, CastType.CAST_NUM);
         }
-        case BIGINT_VALUE -> {
+        case TSParserSym.BIGINT_FUN -> {
             RESULT = new Cast(cast.line(), cast.column(), val, CastType.CAST_BIG);
         }
-        case BOOLEAN_VALUE -> {
+        case TSParserSym.BOOLEAN_FUN -> {
             RESULT = new Cast(cast.line(), cast.column(), val, CastType.CAST_BOOL);
 
         }
-        case STRING_VALUE -> {
+        case TSParserSym.STRING_FUN -> {
             RESULT = new Cast(cast.line(), cast.column(), val, CastType.CAST_STRING);
 
         }
 
     }
     :}
-	| d
+	| d:d
 	{:RESULT = d;:}
 	;
 	
@@ -339,14 +351,14 @@ d
 	| BIGINT_VALUE:bigInt
 	{:RESULT = new Value(bigInt.line(), bigInt.column(), bigInt.value(), ValueType.BIG_INT_VALUE);:}
 
-	| TRUE:true
-	{:RESULT = new Value(true.line(), true.column(), "true", ValueType.BOOLEAN);:}
+	| TRUE:trueVal
+	{:RESULT = new Value(trueVal.line(), trueVal.column(), "true", ValueType.BOOLEAN);:}
 
-	| FALSE:false
-	{:RESULT = new Value(false.line(), false.column(), "false", ValueType.BOOLEAN);:}
+	| FALSE:falseVal
+	{:RESULT = new Value(falseVal.line(), falseVal.column(), "false", ValueType.BOOLEAN);:}
 
     | STRING_VALUE:value DOT stringFun:stringFun
-	{:RESULT = stringFun; RESULT.setValue(value.value());:}
+	{:stringFun.setValue(value.value()); RESULT = stringFun;:}
 
 	| STRING_VALUE:string
 	{:RESULT = new Value(string.line(), string.column(), string.value(), ValueType.STRING_VALUE);:}
@@ -355,7 +367,7 @@ d
 	{:RESULT = new Value(id.line(), id.column(), id.value(), ValueType.ID);:}
 
 	| ID:value DOT stringFun:stringFun
-	{:RESULT = stringFun; RESULT.setValue(value.value());:}
+	{:stringFun.setValue(value.value()); RESULT = stringFun;:}
 
 	| callFunction:callFunction
 	{:RESULT = callFunction;:}
@@ -389,34 +401,34 @@ stringFun
 
 mathFun
 ::= ABS:bs LPAREN ids:ids RPAREN
-    {:RESULT = new Math(bs.line(), bs.column(), MathType.ABS, ids;:}
+    {:RESULT = new MathInstruction(bs.line(), bs.column(), MathType.ABS, ids);:}
     | CEIL:cl LPAREN ids:ids RPAREN
-    {:RESULT = new Math(cl.line(), cl.column(), MathType.CEIL, ids;:}
+    {:RESULT = new MathInstruction(cl.line(), cl.column(), MathType.CEIL, ids);:}
     | COS:cs LPAREN ids:ids RPAREN
-    {:RESULT = new Math(cs.line(), cs.column(), MathType.COS, ids;:}
+    {:RESULT = new MathInstruction(cs.line(), cs.column(), MathType.COS, ids);:}
     | SIN:sn LPAREN ids:ids RPAREN
-    {:RESULT = new Math(sn.line(), sn.column(), MathType.SIN, ids;:}
+    {:RESULT = new MathInstruction(sn.line(), sn.column(), MathType.SIN, ids);:}
     | TAN:tn LPAREN ids:ids RPAREN
-    {:RESULT = new Math(tn.line(), tn.column(), MathType.TAN, ids;:}
+    {:RESULT = new MathInstruction(tn.line(), tn.column(), MathType.TAN, ids);:}
     | EXP:xp LPAREN ids:ids RPAREN
-    {:RESULT = new Math(xp.line(), xp.column(), MathType.EXP, ids;:}
+    {:RESULT = new MathInstruction(xp.line(), xp.column(), MathType.EXP, ids);:}
     | FLOOR:fr LPAREN ids:ids RPAREN
-    {:RESULT = new Math(fr.line(), fr.column(), MathType.FLOOR, ids;:}
-    | POW:pw LPAREN ids:dis RPAREN
-    {:RESULT = new Math(pw.line(), pw.column(), MathType.POW, ids;:}
+    {:RESULT = new MathInstruction(fr.line(), fr.column(), MathType.FLOOR, ids);:}
+    | POW:pw LPAREN ids:ids RPAREN
+    {:RESULT = new MathInstruction(pw.line(), pw.column(), MathType.POW, ids);:}
     | SQRT:srt LPAREN ids:ids RPAREN
-    {:RESULT = new Math(srt.line(), srt.column(), MathType.SQRT, ids;:}
+    {:RESULT = new MathInstruction(srt.line(), srt.column(), MathType.SQRT, ids);:}
     | RANDOM:rm LPAREN RPAREN
-    {:RESULT = new Math(rm.line(), rm.column(), MathType.RANDOM, null);:}
+    {:RESULT = new MathInstruction(rm.line(), rm.column(), MathType.RANDOM, null);:}
 
     ;
 
 mathConst
 ::= E:e
-    {:RESULT = new Math(sqrt.line(), sqrt.column(), MathType.E, null);:}
+    {:RESULT = new MathInstruction(e.line(), e.column(), MathType.E, null);:}
     | PI:pi
-    {:RESULT = new Math(sqrt.line(), sqrt.column(), MathType.PI, null);:}
+    {:RESULT = new MathInstruction(pi.line(), pi.column(), MathType.PI, null);:}
     | SQRT_TWO:sqrt
-    {:RESULT = new Math(sqrt.line(), sqrt.column(), MathType.SQRT_TWO, null);:}
+    {:RESULT = new MathInstruction(sqrt.line(), sqrt.column(), MathType.SQRT_TWO, null);:}
     ;
 

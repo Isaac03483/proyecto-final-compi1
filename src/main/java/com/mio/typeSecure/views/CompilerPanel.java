@@ -10,7 +10,6 @@ import com.mio.typeSecure.utils.LineNumber;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
 
@@ -36,7 +35,6 @@ public class CompilerPanel extends javax.swing.JPanel {
     public void setFileInfo(File file, String content){
         this.fileName = file.getName();
         this.filePath = file.getAbsolutePath();
-        this.content = content;
         this.inputArea.setText(content);
     }
 
@@ -150,6 +148,14 @@ public class CompilerPanel extends javax.swing.JPanel {
         return inputArea;
     }
 
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton compilerButton;
     private javax.swing.JTextArea inputArea;
@@ -163,5 +169,4 @@ public class CompilerPanel extends javax.swing.JPanel {
     private LineNumber lineNumber;
     private String filePath;
     private String fileName;
-    private String content;
 }
