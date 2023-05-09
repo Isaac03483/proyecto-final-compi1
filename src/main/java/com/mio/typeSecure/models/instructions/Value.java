@@ -14,7 +14,7 @@ public class Value extends Instruction{
     }
 
     @Override
-    public void accept(Visitor visitor) {
-
+    public Variable accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }

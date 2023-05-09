@@ -8,13 +8,13 @@ public class StringInstruction extends Instruction{
 
     private String value;
     private StringType type;
-    private List<Instruction> instructions;
+    private Instruction instruction;
 
-    public StringInstruction(int line, int column, String value, StringType type, List<Instruction> instructions) {
+    public StringInstruction(int line, int column, String value, StringType type, Instruction instruction) {
         super(line, column);
         this.value = value;
         this.type = type;
-        this.instructions = instructions;
+        this.instruction = instruction;
     }
 
     public String getValue() {
@@ -33,16 +33,16 @@ public class StringInstruction extends Instruction{
         this.type = type;
     }
 
-    public List<Instruction> getInstructions() {
-        return instructions;
+    public Instruction getInstruction() {
+        return instruction;
     }
 
-    public void setInstructions(List<Instruction> instructions) {
-        this.instructions = instructions;
+    public void setInstructions(Instruction instruction) {
+        this.instruction = instruction;
     }
 
     @Override
-    public void accept(Visitor visitor) {
-
+    public Variable accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }

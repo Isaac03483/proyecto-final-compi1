@@ -18,10 +18,10 @@ public class TSParserController {
     public List<String> compile(String input){
         TSLexer tsLexer = new TSLexer(new StringReader(input));
         List<TSError> errors = new ArrayList<>();
-        List<Instruction> instructions = new ArrayList<>();
-        TSParser tsParser = new TSParser(instructions, tsLexer, errors);
+        List<Instruction> instructions = null;
+        TSParser tsParser = new TSParser(tsLexer, errors);
         try {
-            tsParser.parse();
+            instructions = (List<Instruction>)tsParser.parse().value;
             System.out.println("Compilando...");
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -31,7 +31,7 @@ public class TSParserController {
     }
 
     public List<String> execute(List<Instruction> instructions, List<TSError> errors){
-        List<String> out = null;
+        List<String> out = new ArrayList<>();
         //TODO: usar un visitor para verificar que todo el código funcione de la forma correcta
 
         if(!errors.isEmpty()){

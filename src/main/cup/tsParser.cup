@@ -6,7 +6,7 @@ import com.mio.typeSecure.models.TSError;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import java.util.List;
-import com.mio.typeSecure.instructions.*;
+import com.mio.typeSecure.models.instructions.*;
 
 class TSParser;
 /*
@@ -15,11 +15,9 @@ class TSParser;
 parser code {:
 
     private List<TSError> errorList;
-    public List<Instruction> instructions;
-    public TSParser(List<Instruction> instructions, TSLexer lexer, List<TSError> errorList){
+    public TSParser(TSLexer lexer, List<TSError> errorList){
         super(lexer);
         this.errorList = errorList;
-        this.instructions=instructions;
 
     }
 
@@ -91,18 +89,18 @@ terminal Token CONSOLE_LOG, IF, ELSE, FOR, WHILE, DO, BREAK, CONTINUE, FUNCTION,
 terminal Token ABS, CEIL, COS, SIN, TAN, EXP, FLOOR, POW, SQRT, RANDOM, ID, NUMBER_VALUE, BIGINT_VALUE;
 terminal Token STRING_VALUE, SYM, PRINT_AST, SYMBOL_TABLE;
 
-non terminal List<Instruction> main,instructions,ids;
+non terminal List<Instruction> main,instructions,ids,declarationList;
 non terminal List<Parameter> parameters;
 non terminal Parameter parameter;
-non terminal VariableType type;
+non terminal VariableType type,idType;
 non terminal Instruction funInstruction,instruction;
 non terminal Instruction declarationInstruction, assignmentInstruction, ifInstruction, forInstruction, whileInstruction;
-non terminal Instruction doWhileInstruction,elseIfInstruction,assignmentInDec,declarationList,varType;
-non terminal Instruction idType,inDecInstruction, callFunction,consoleInstruction,a,b,c,d,w,x,y,z;
+non terminal Instruction doWhileInstruction,elseIfInstruction,assignmentInDec;
+non terminal Instruction inDecInstruction, callFunction,consoleInstruction,a,b,c,d,w,x,y,z;
 non terminal Instruction continueInstruction, breakInstruction, returnInstruction, mathFun, mathConst;
 non terminal ReturnType returnType;
 non terminal StringInstruction stringFun;
-non terminal Token castFun;
+non terminal Token castFun,decType;
 
 start with main;
 
@@ -114,9 +112,15 @@ main
 	
 instructions
 ::=	instructions:list instruction:instruction
-    {:RESULT = list; RESULT.add(instruction);:}
+    {:
+    RESULT = list;
+    if(instruction != null){
+
+        RESULT.add(instruction);
+    }
+    :}
     |
-    {:RESULT = this.parser.instructions;:}
+    {:RESULT = new ArrayList<>();:}
 	;
 	
 parameters
@@ -145,93 +149,154 @@ type
 
 	
 instruction
-::=	declarationInstruction SEMICOLON
-    | funInstruction
-	| assignmentInstruction SEMICOLON
-	| ifInstruction
-	| forInstruction
-	| whileInstruction
-	| doWhileInstruction
-	| inDecInstruction SEMICOLON
-	| callFunction SEMICOLON
-	| consoleInstruction SEMICOLON
-	| continueInstruction SEMICOLON
-	| breakInstruction SEMICOLON
-	| returnInstruction SEMICOLON
+::=	declarationInstruction:i SEMICOLON
+	{:RESULT = i;:}
+    | funInstruction:i
+	{:RESULT = i;:}
+	| assignmentInstruction:i SEMICOLON
+	{:RESULT = i;:}
+	| ifInstruction:i
+	{:RESULT = i;:}
+	| forInstruction:i
+	{:RESULT = i;:}
+	| whileInstruction:i
+	{:RESULT = i;:}
+	| doWhileInstruction:i
+	{:RESULT = i;:}
+	| inDecInstruction:i SEMICOLON
+	{:RESULT = i;:}
+	| callFunction:i SEMICOLON
+	{:RESULT = i;:}
+	| consoleInstruction:i SEMICOLON
+	{:RESULT = i;:}
+	| continueInstruction:i SEMICOLON
+	{:RESULT = i;:}
+	| breakInstruction:i SEMICOLON
+	{:RESULT = i;:}
+	| returnInstruction:i SEMICOLON
+	{:RESULT = i;:}
 	| error SEMICOLON
+	{:RESULT = null;:}
 	;
 
 funInstruction
-::=	FUNCTION ID LPAREN parameters RPAREN returnType LBRACE instructions RBRACE
-	| FUNCTION ID LPAREN RPAREN returnType LBRACE instructions RBRACE
+::=	FUNCTION ID:id LPAREN parameters:paramList RPAREN returnType:type LBRACE instructions:insList RBRACE
+	{:RESULT = new Function(id.line(), id.column(),id.value(), paramList, insList, type);:}
+	| FUNCTION ID:id LPAREN RPAREN returnType:type LBRACE instructions:insList RBRACE
+	{:RESULT = new Function(id.line(), id.column(),id.value(), null, insList, type);:}
 	;
 
 returnType
-::= COLON VOID
-    | COLON NUMBER
-    | COLON BIGINT
-    | COLON STRING
-    | COLON BOOLEAN
+::= COLON VOID:v
+    {:RESULT = ReturnType.VOID;:}
+    | COLON NUMBER:n
+    {:RESULT = ReturnType.NUMBER;:}
+    | COLON BIGINT:b
+    {:RESULT = ReturnType.BIG_INT;:}
+    | COLON STRING:s
+    {:RESULT = ReturnType.STRING;:}
+    | COLON BOOLEAN:b
+    {:RESULT = ReturnType.BOOLEAN;:}
     |
+    {:RESULT = null;:}
     ;
 	
 	
 ifInstruction
-::=	IF LPAREN w RPAREN LBRACE instructions RBRACE
-	| IF LPAREN w RPAREN LBRACE instructions RBRACE elseIfInstruction
+::=	IF:ifI LPAREN w:val RPAREN LBRACE instructions:trueBlock RBRACE
+    {:RESULT = new If(ifI.line(), ifI.column(), val, trueBlock, null);:}
+	| IF:ifI LPAREN w:val RPAREN LBRACE instructions:trueBlock RBRACE elseIfInstruction:falseBlock
+    {:RESULT = new If(ifI.line(), ifI.column(), val, trueBlock, falseBlock);:}
 	;
 	
 elseIfInstruction
-::=	ELSE ifInstruction
-	| ELSE LBRACE instructions RBRACE
+::=	ELSE ifInstruction:ifI
+    {:RESULT = ifI;:}
+	| ELSE:elI LBRACE instructions:insList RBRACE
+	{:RESULT = new Else(elI.line(), elI.column(), insList);:}
 	;
 
 forInstruction
-::=	FOR LPAREN declarationInstruction SEMICOLON w SEMICOLON assignmentInDec RPAREN LBRACE instructions RBRACE
-	| FOR LPAREN assignmentInstruction SEMICOLON w SEMICOLON assignmentInDec RPAREN LBRACE instructions RBRACE
+::=	FOR:fr LPAREN declarationInstruction:d SEMICOLON w:o SEMICOLON assignmentInDec:i RPAREN LBRACE instructions:list RBRACE
+    {:RESULT = new For(fr.line(), fr.column(), d, o, i, list);:}
+	| FOR:fr LPAREN assignmentInstruction:d SEMICOLON w:o SEMICOLON assignmentInDec:i RPAREN LBRACE instructions:list RBRACE
+    {:RESULT = new For(fr.line(), fr.column(), d, o, i, list);:}
+	{::}
 	;
 
 assignmentInDec
-::= inDecInstruction
-    | assignmentInstruction
+::= inDecInstruction:i
+    {:RESULT = i;:}
+    | assignmentInstruction:i
+    {:RESULT = i;:}
     ;
 
 inDecInstruction
-::=	| ID INCREMENT
-	| ID DECREMENT
+::=	| ID:id INCREMENT:i
+    {:
+	RESULT = new UnaryOperation(
+	    i.line(), i.column(), new Value(id.line(), id.column(), id.value(), ValueType.ID), OperationType.INCREMENT
+	);
+	:}
+	| ID:id DECREMENT:d
+	{:
+	RESULT = new UnaryOperation(
+	    d.line(), d.column(), new Value(id.line(), id.column(), id.value(), ValueType.ID), OperationType.DECREMENT
+	);
+	:}
 	;
 
 whileInstruction
-::=	WHILE LPAREN w RPAREN LBRACE instructions RBRACE
+::=	WHILE:wl LPAREN w:val RPAREN LBRACE instructions:list RBRACE
+    {:RESULT = new While(wl.line(),wl.column(), val, list);:}
 	;
 	
 doWhileInstruction
-::=	DO LBRACE instructions RBRACE WHILE LPAREN w RPAREN SEMICOLON
+::=	DO:doI LBRACE instructions:list RBRACE WHILE LPAREN w:val RPAREN SEMICOLON
+    {:RESULT = new DoWhile(doI.line(), doI.column(), val, list);:}
     ;
 	
 declarationInstruction
-::=	varType declarationList
+::=	decType:decType declarationList:list
+    {:
+        DeclarationType type = DeclarationType.CONST;
+        if(decType.type() == TSParserSym.LET){
+            type = DeclarationType.LET;
+        }
+        RESULT = new Declaration(decType.line(), decType.column(), type, list);
+    :}
 	;
 	
 declarationList
-::=	declarationList COMMA ID idType ASSIGN w
-	| declarationList COMMA ID idType
-	| ID idType
-	| ID idType ASSIGN w
+::=	declarationList:list COMMA ID:id idType:variableType ASSIGN w:val
+	{:RESULT = list; RESULT.add(new VariableDeclaration(id.line(),id.column(),id.value(),variableType, val));:}
+
+	| declarationList:list COMMA ID:id idType:variableType
+	{:RESULT = list; RESULT.add(new VariableDeclaration(id.line(),id.column(),id.value(),variableType, null));:}
+	| ID:id idType:variableType
+	{:RESULT = new ArrayList<>(); RESULT.add(new VariableDeclaration(id.line(),id.column(),id.value(),variableType, null));:}
+
+	| ID:id idType:variableType ASSIGN w:val
+	{:RESULT = new ArrayList<>(); RESULT.add(new VariableDeclaration(id.line(),id.column(),id.value(),variableType, val));:}
 	;
 	
 idType
-::=	COLON type
+::=	COLON type:type
+    {:RESULT = type;:}
 	|
+	{:RESULT = null;:}
 	;
 	
-varType
-::=	LET
-	| CONST
+decType
+::=	LET:t
+	{:RESULT = t;:}
+	| CONST:t
+	{:RESULT = t;:}
 	;
 	
 assignmentInstruction
-::=	ID ASSIGN w
+::=	ID:id ASSIGN w:val
+    {:RESULT = new Assignment(id.line(), id.column(), id.value(), val);:}
 	;
 
 callFunction
@@ -275,35 +340,57 @@ returnInstruction
     ;
 
 w
-::=	w OR x
-	| x
+::=	w:lft OR:op x:rgt
+	{:RESULT = new BinaryOperation(op.line(),op.column(), lft, rgt, OperationType.OR);:}
+	| x:val
+	{:RESULT = val;:}
+
 	;
 	
 x
-::=	x AND y
-	| y
+::=	x:lft AND:op y:rgt
+	{:RESULT = new BinaryOperation(op.line(),op.column(), lft, rgt, OperationType.AND);:}
+	| y:val
+	{:RESULT = val;:}
 	;
 
 y
-::= NOT z
+::= NOT:op z:rgt
+    {:RESULT = new UnaryOperation(op.line(), op.column(), rgt, OperationType.NOT);:}
     | z:val
     {:RESULT = val;:}
     ;
 
 z
-::=	z EQUALS a
-	| z NOT_EQUALS a
-	| z LESS a
-	| z GREATER a
-	| z LESS_EQ a
-	| z GREATER_EQ a
+::=	z:lft EQUALS:op a:rgt
+	{:RESULT = new BinaryOperation(op.line(),op.column(), lft, rgt, OperationType.EQUALS);:}
+
+	| z:lft NOT_EQUALS:op a:rgt
+	{:RESULT = new BinaryOperation(op.line(),op.column(), lft, rgt, OperationType.NOT_EQUALS);:}
+
+	| z:lft LESS:op a:rgt
+	{:RESULT = new BinaryOperation(op.line(),op.column(), lft, rgt, OperationType.LESS);:}
+
+	| z:lft GREATER:op a:rgt
+	{:RESULT = new BinaryOperation(op.line(),op.column(), lft, rgt, OperationType.GREATER);:}
+
+	| z:lft LESS_EQ:op a:rgt
+	{:RESULT = new BinaryOperation(op.line(),op.column(), lft, rgt, OperationType.LESS_EQ);:}
+
+	| z:lft GREATER_EQ:op a:rgt
+	{:RESULT = new BinaryOperation(op.line(),op.column(), lft, rgt, OperationType.GREATER_EQ);:}
+
 	| a:val
 	{:RESULT = val;:}
 	;
 	
 a
-::=	a PLUS b
-	| a MINUS b
+::=	a:lft PLUS:ps b:rgt
+	{:RESULT = new BinaryOperation(ps.line(),ps.column(), lft, rgt, OperationType.PLUS);:}
+
+	| a:lft MINUS:ms b:rgt
+	{:RESULT = new BinaryOperation(ms.line(),ms.column(), lft, rgt, OperationType.MINUS);:}
+
 	| b:val
 	{:RESULT = val;:}
 	;
@@ -391,11 +478,19 @@ castFun
 	;
 	
 stringFun
-::=	LENGTH
-	| CHAR_AT LPAREN a RPAREN
-	| LOWER LPAREN RPAREN
-	| UPPER LPAREN RPAREN
-	| CONCAT LPAREN a RPAREN
+::=	LENGTH:lngt
+    {:RESULT = new StringInstruction(lngt.line(),lngt.column(), null, StringType.LENGTH, null);:}
+	| CHAR_AT:ct LPAREN a:val RPAREN
+    {:RESULT = new StringInstruction(ct.line(),ct.column(), null, StringType.CHAR_AT, val);:}
+	| LOWER:lw LPAREN RPAREN
+    {:RESULT = new StringInstruction(lw.line(),lw.column(), null, StringType.LOWER, null);:}
+
+	| UPPER:up LPAREN RPAREN
+    {:RESULT = new StringInstruction(up.line(),up.column(), null, StringType.UPPER, null);:}
+
+	| CONCAT:cct LPAREN a:val RPAREN
+    {:RESULT = new StringInstruction(cct.line(),cct.column(), null, StringType.CONCAT, val);:}
+
 	| error RPAREN
 	;
 

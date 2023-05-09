@@ -14,14 +14,16 @@ public abstract class Visitor {
     public abstract void visit(ConsoleLog consoleLog);
     public abstract void visit(Continue continueInstruction);
     public abstract void visit(Declaration declaration);
-    public abstract void visit(DoWhile doWhile);
-    public abstract void visit(For forInstruction);
+    public abstract Variable visit(VariableDeclaration variableDeclaration);
+    public abstract Variable visit(DoWhile doWhile);
+    public abstract Variable visit(Else elseInstruction);
+    public abstract Variable visit(For forInstruction);
     public abstract void visit(Function function);
-    public abstract void visit(If ifInstruction);
+    public abstract Variable visit(If ifInstruction);
     public abstract Variable visit(MathInstruction mathInstruction);
     public abstract Variable visit(ReturnInstruction returnInstruction);
     public abstract Variable visit(StringInstruction stringInstruction);
     public abstract Variable visit(UnaryOperation unaryOperation);
     public abstract Variable visit(Value value);
-    public abstract void visit(While whileInstruction);
+    public abstract Variable visit(While whileInstruction);
 }

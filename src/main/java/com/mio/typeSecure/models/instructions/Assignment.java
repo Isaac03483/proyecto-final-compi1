@@ -6,21 +6,8 @@ public class Assignment extends Instruction{
 
 
     public String id;
-    public VariableType variableType;
     public Instruction operation;
 
-    public Assignment(int line, int column, String id, VariableType variableType, Instruction operation) {
-        super(line, column);
-        this.id = id;
-        this.variableType = variableType;
-        this.operation = operation;
-    }
-
-    public Assignment(int line, int column, String id, VariableType variableType) {
-        super(line, column);
-        this.id = id;
-        this.variableType = variableType;
-    }
 
     public Assignment(int line, int column, String id, Instruction operation) {
         super(line, column);

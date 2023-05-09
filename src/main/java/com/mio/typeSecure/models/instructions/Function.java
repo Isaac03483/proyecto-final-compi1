@@ -12,19 +12,18 @@ public class Function extends Instruction{
     public ReturnType returnType;
     public SymbolTable symbolTable;
 
-    public Function(int line, int column, String id, List<Parameter> parameters, List<Instruction> instructions, ReturnType returnType) {
+    public Function(int line,
+                    int column,
+                    String id,
+                    List<Parameter> parameters,
+                    List<Instruction> instructions,
+                    ReturnType returnType) {
+
         super(line, column);
         this.id = id;
         this.parameters = parameters;
         this.instructions = instructions;
         this.returnType = returnType;
-    }
-
-    public Function(int line, int column, String id, List<Parameter> parameters, List<Instruction> instructions) {
-        super(line, column);
-        this.id = id;
-        this.parameters = parameters;
-        this.instructions = instructions;
     }
 
 

@@ -11,7 +11,13 @@ public class For extends Instruction{
     public Instruction incrementBlock;
     public List<Instruction> instructions;
 
-    public For(int line, int column, Instruction assignmentBlock, Instruction operationBlock, Instruction incrementBlock, List<Instruction> instructions) {
+    public For(int line,
+               int column,
+               Instruction assignmentBlock,
+               Instruction operationBlock,
+               Instruction incrementBlock,
+               List<Instruction> instructions) {
+
         super(line, column);
         this.assignmentBlock = assignmentBlock;
         this.operationBlock = operationBlock;
@@ -22,7 +28,6 @@ public class For extends Instruction{
 
     @Override
     public Variable accept(Visitor visitor) {
-
         visitor.visit(this);
         return null;
     }
