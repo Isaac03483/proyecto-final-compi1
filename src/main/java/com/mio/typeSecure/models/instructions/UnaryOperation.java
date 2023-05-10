@@ -4,8 +4,8 @@ import com.mio.typeSecure.models.visitor.Visitor;
 
 public class UnaryOperation extends Instruction{
 
-    private Instruction rightInstruction;
-    private OperationType operationType;
+    public Instruction rightInstruction;
+    public OperationType operationType;
 
     public UnaryOperation(int line, int column,Instruction rightInstruction, OperationType operationType) {
         super(line, column);

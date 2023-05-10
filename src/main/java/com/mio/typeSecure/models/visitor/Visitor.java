@@ -4,7 +4,11 @@ import com.mio.typeSecure.models.instructions.*;
 
 public abstract class Visitor {
 
-    private SymbolTable table;
+    public SymbolTable table;
+
+    public Visitor(SymbolTable table) {
+        this.table = table;
+    }
 
     public abstract Variable visit(Assignment assignment);
     public abstract Variable visit(BinaryOperation binaryOperation);
@@ -14,7 +18,6 @@ public abstract class Visitor {
     public abstract void visit(ConsoleLog consoleLog);
     public abstract void visit(Continue continueInstruction);
     public abstract void visit(Declaration declaration);
-    public abstract Variable visit(VariableDeclaration variableDeclaration);
     public abstract Variable visit(DoWhile doWhile);
     public abstract Variable visit(Else elseInstruction);
     public abstract Variable visit(For forInstruction);
@@ -25,5 +28,7 @@ public abstract class Visitor {
     public abstract Variable visit(StringInstruction stringInstruction);
     public abstract Variable visit(UnaryOperation unaryOperation);
     public abstract Variable visit(Value value);
+    public abstract Variable visit(VariableDeclaration variableDeclaration);
+
     public abstract Variable visit(While whileInstruction);
 }

@@ -4,8 +4,8 @@ import com.mio.typeSecure.models.visitor.Visitor;
 
 public abstract class Instruction {
 
-    int line;
-    int column;
+    public int line;
+    public int column;
 
     public Instruction(int line, int column) {
         this.line = line;

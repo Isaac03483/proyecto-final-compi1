@@ -427,6 +427,10 @@ c
 
     }
     :}
+	| MINUS:m d:d
+	{:RESULT = new UnaryOperation(m.line(), m.column(), d, OperationType.MINUS);:}
+	| PLUS d:d
+	{:RESULT = d;:}
 	| d:d
 	{:RESULT = d;:}
 	;
@@ -462,7 +466,7 @@ d
 	| mathConst:math
 	{:RESULT = math;:}
 
-	| LPAREN a:val RPAREN
+	| LPAREN w:val RPAREN
 	{:RESULT = val;:}
 	;
 	

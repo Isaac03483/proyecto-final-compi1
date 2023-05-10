@@ -495,7 +495,7 @@ public class TSLexer implements java_cup.runtime.Scanner {
     }
 
     private Symbol symbolWithoutValue(int type){
-        System.out.println("Encontre: "+ TSParserSym.terminalNames[type]);
+        System.out.println("Encontre: "+TSParserSym.terminalNames[type]);
         return new Symbol(type, new Token(type, null, yyline+1, yycolumn+1 ));
     }
 
@@ -1041,7 +1041,7 @@ public class TSLexer implements java_cup.runtime.Scanner {
           // fall through
           case 99: break;
           case 24:
-            { return symbolWithValue(ID, yytext().substring(1, yytext().length()-1));
+            { return symbolWithValue(STRING_VALUE, yytext().substring(1, yytext().length()-1));
             }
           // fall through
           case 100: break;

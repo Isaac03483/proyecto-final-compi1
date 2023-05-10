@@ -526,7 +526,7 @@ COMMENT = "//"[^\r\n]* | "/*" [^*]* ("*"[^/][^*]*)* "*/"
     }
     {STRING_VALUE}
     {
-        return symbolWithValue(ID, yytext().substring(1, yytext().length()-1));
+        return symbolWithValue(STRING_VALUE, yytext().substring(1, yytext().length()-1));
 
     }
 

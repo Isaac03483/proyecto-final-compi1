@@ -4,8 +4,8 @@ import com.mio.typeSecure.models.visitor.Visitor;
 
 public class Value extends Instruction{
 
-    String value;
-    ValueType valueType;
+    public String value;
+    public ValueType valueType;
 
     public Value(int line, int column, String value, ValueType valueType) {
         super(line, column);

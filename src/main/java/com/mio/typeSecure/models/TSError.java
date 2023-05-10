@@ -4,6 +4,6 @@ public record TSError(int line, int column, String message) {
 
     @Override
     public String toString() {
-        return "Linea: "+line+" Columna: "+column+". "+message+".";
+        return "Linea: "+line+" Columna: "+column+". "+message;
     }
 }

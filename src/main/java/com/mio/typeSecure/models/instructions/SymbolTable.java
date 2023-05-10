@@ -3,9 +3,9 @@ package com.mio.typeSecure.models.instructions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SymbolTable implements Cloneable{
+public class SymbolTable{
 
-    private List<Variable> variableList;
+    private final List<Variable> variableList;
 
     private SymbolTable parent;
     private static List<Function> functions;
@@ -55,12 +55,7 @@ public class SymbolTable implements Cloneable{
     }
 
 
-    @Override
-    public SymbolTable clone() {
-        try {
-            return (SymbolTable) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+    public List<Variable> getVariableList(){
+        return  this.variableList;
     }
 }
