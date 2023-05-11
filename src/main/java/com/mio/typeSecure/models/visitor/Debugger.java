@@ -2,9 +2,10 @@ package com.mio.typeSecure.models.visitor;
 
 import com.mio.typeSecure.models.TSError;
 import com.mio.typeSecure.models.instructions.*;
-import com.mio.typeSecure.utils.OperationHelper;
+import com.mio.typeSecure.models.helpers.OperationHelper;
 
 import java.util.List;
+import java.util.Objects;
 
 public class Debugger extends Visitor{
 
@@ -591,6 +592,190 @@ public class Debugger extends Visitor{
 
     @Override
     public Variable visit(Cast cast) {
+        Variable value = (Variable) cast.value.accept(this);
+        if(value == null){
+            this.errorList.add(
+                    new TSError(
+                            cast.line,
+                            cast.column,
+                            "No se pudo realizar la Conversión."
+                    )
+            );
+            return null;
+        }
+
+        Variable result = new Variable();
+
+        switch (cast.type){
+            case CAST_NUM -> {
+                if(value.value.equals("undefined")){
+                    this.errorList.add(
+                            new TSError(
+                                    cast.line,
+                                    cast.column,
+                                    "No se puede castear un valor undefined."
+                            )
+                    );
+                    return null;
+                }
+
+                result.variableType = VariableType.NUMBER;
+
+                switch (value.variableType){
+                    case NUMBER -> {
+                        result.value = value.value;
+                        return result;
+                    }
+                    case BIG_INT -> {
+                        result.value = value.value.substring(0, value.value.length()-1) ;
+                        return result;
+                    }
+                    case BOOLEAN -> {
+                        if(value.value.equalsIgnoreCase("true")){
+                            result.value = "1";
+                            return result;
+                        }
+
+                        result.value = "0";
+                        return result;
+                    }
+                    case STRING -> {
+                        if(value.value.isBlank()){
+                            result.value = "0";
+                            return result;
+                        }
+
+                        try{
+                            double resultVal = Double.parseDouble(value.value.trim());
+                            result.value = String.valueOf(resultVal);
+                            return result;
+                        } catch (NumberFormatException e){
+                            this.errorList.add(
+                                    new TSError(cast.line, cast.column, "No se pudo castear: "+value.value)
+                            );
+                            return null;
+                        }
+                    }
+                }
+            }
+            case CAST_BIG -> {
+
+                if(value.value.equals("undefined")){
+                    this.errorList.add(
+                            new TSError(
+                                    cast.line,
+                                    cast.column,
+                                    "No se puede castear un valor undefined."
+                            )
+                    );
+                    return null;
+                }
+
+                result.variableType = VariableType.BIG_INT;
+
+                switch (value.variableType){
+                    case NUMBER -> {
+                        double val = Double.parseDouble(value.value);
+                        if(val % 1 != 0){
+                            this.errorList.add(
+                                    new TSError(cast.line,
+                                            cast.column,
+                                            "Imposible castear por falta de presición: "+val
+                                    )
+                            );
+                            return null;
+                        }
+
+                        int intVal = (int) val;
+                        result.value = String.valueOf(intVal).concat("n");
+                        return result;
+                    }
+                    case BIG_INT -> {
+                        result.value = value.value;
+                        return result;
+                    }
+                    case BOOLEAN -> {
+                        if(value.value.equalsIgnoreCase("true")){
+                            result.value = "1n";
+                            return result;
+                        }
+
+                        result.value = "0n";
+                        return result;
+                    }
+                    case STRING -> {
+                        if(value.value.isBlank()){
+                            result.value = "0n";
+                            return result;
+                        }
+
+                        try{
+
+                            String castVal = value.value.trim();
+                            int resultVal = Integer.parseInt(castVal.substring(0,castVal.length()-1));
+                            result.value = String.valueOf(resultVal).concat("n");
+                            return result;
+                        } catch (NumberFormatException e){
+                            this.errorList.add(
+                                    new TSError(cast.line, cast.column, "No se pudo castear: "+value.value)
+                            );
+                            return null;
+                        }
+                    }
+                }
+            }
+            case CAST_BOOL -> {
+                result.variableType = VariableType.BOOLEAN;
+                if(value.value.equals("undefined")){
+                    result.value = "false";
+
+                }
+
+                switch (value.variableType){
+                    case NUMBER -> {
+                        if(value.value.equals("0") || value.value.equals("-0.0")){
+                            result.value = "false";
+                            return result;
+                        }
+
+                        result.value = "true";
+                        return result;
+                    }
+
+                    case BIG_INT -> {
+                        if(value.value.equals("0n") || value.value.equals("-0n")){
+                            result.value = "false";
+                            return result;
+                        }
+
+                        result.value = "true";
+                        return result;
+                    }
+
+                    case BOOLEAN -> {
+                        result.value = value.value;
+                        return result;
+                    }
+
+                    case STRING -> {
+                        if(value.value.length() == 0){
+                            result.value = "false";
+                            return result;
+                        }
+
+                        result.value = "true";
+                        return result;
+                    }
+                }
+
+            }
+            case CAST_STRING -> {
+                result.variableType = VariableType.STRING;
+                result.value = value.value;
+                return result;
+            }
+        }
+
         return null;
     }
 
@@ -684,11 +869,568 @@ public class Debugger extends Visitor{
 
     @Override
     public Variable visit(If ifInstruction) {
+
+
+
         return null;
     }
 
     @Override
     public Variable visit(MathInstruction mathInstruction) {
+
+        Variable result = new Variable();
+        result.variableType = VariableType.NUMBER;
+        result.declarationType = DeclarationType.LET;
+        switch (mathInstruction.mathType){
+            case E -> {
+                result.declarationType = DeclarationType.CONST;
+
+                result.value = String.valueOf(Math.E);
+                return result;
+            }
+            case PI -> {
+                result.declarationType = DeclarationType.CONST;
+
+                result.value = String.valueOf(Math.PI);
+                return result;
+            }
+
+            case SQRT_TWO -> {
+                result.declarationType = DeclarationType.CONST;
+
+                result.value = String.valueOf(Math.sqrt(2));
+                return result;
+            }
+
+            case ABS -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 1){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+                    double resVal = Math.abs(Double.parseDouble(parameters.get(0).value));
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+            }
+
+            case CEIL -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 1){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+                    double resVal = Math.ceil(Double.parseDouble(parameters.get(0).value));
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+            case COS -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 1){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+                    double resVal = Math.cos(Double.parseDouble(parameters.get(0).value));
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+            case EXP -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 1){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+                    double resVal = Math.exp(Double.parseDouble(parameters.get(0).value));
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+            case FLOOR -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 1){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+                    double resVal = Math.floor(Double.parseDouble(parameters.get(0).value));
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+            case POW -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 2){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+
+                    double resVal = Math.pow(Double.parseDouble(parameters.get(0).value),
+                            Double.parseDouble(parameters.get(1).value)
+                    );
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+            case RANDOM -> {
+                double randomVal = Math.random();
+                result.value = String.valueOf(randomVal);
+                return result;
+            }
+
+            case SIN -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 1){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+
+                    double resVal = Math.sin(Double.parseDouble(parameters.get(0).value));
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+            case SQRT -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 1){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+
+                    double resVal = Math.sqrt(Double.parseDouble(parameters.get(0).value));
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+            case TAN -> {
+                if(mathInstruction.instructions == null){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se necesitan parámetros para ejecutar esta instrucción."
+                            )
+                    );
+                    return null;
+                }
+
+                List<Variable> parameters = mathInstruction.instructions.stream()
+                        .map(instruction -> instruction.accept(this))
+                        .filter(Objects::nonNull).map(o -> (Variable)o).toList();
+
+                boolean isNoNumber = parameters.stream()
+                        .anyMatch(parameter -> parameter.variableType != VariableType.NUMBER);
+
+                if(isNoNumber){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+
+                if(parameters.size() != 1){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un parámetro."
+                            )
+                    );
+                    return null;
+                }
+
+                try {
+
+                    double resVal = Math.tan(Double.parseDouble(parameters.get(0).value));
+                    result.value = String.valueOf(resVal);
+                    return result;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(
+                                    mathInstruction.line,
+                                    mathInstruction.column,
+                                    "Se esperaba un valor tipo NUMBER."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+        }
+
+
         return null;
     }
 
@@ -811,6 +1553,32 @@ public class Debugger extends Visitor{
             }
 
             case NOT -> {
+                if(right.value.equals("undefined")){
+                    this.errorList.add(
+                            new TSError(
+                                    unaryOperation.line,
+                                    unaryOperation.column,
+                                    "No se puede realizar la operación si el valor es undefined."
+                            )
+                    );
+                    return null;
+                }
+
+                if(right.variableType != VariableType.BOOLEAN){
+                    this.errorList.add(
+                            new TSError(
+                                    unaryOperation.line,
+                                    unaryOperation.column,
+                                    "Los operadores lógicos solo son aplicables a tipos BOOLEAN."
+                            )
+                    );
+                    return null;
+                }
+
+                OperationHelper.not(right.value, result);
+                return result;
+
+
 
             }
         }

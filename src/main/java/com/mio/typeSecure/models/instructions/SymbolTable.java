@@ -28,7 +28,10 @@ public class SymbolTable{
         SymbolTable symbolTable = this;
         Variable varInTable = null;
         while(symbolTable != null){
-            varInTable = symbolTable.variableList.stream().filter(variable -> variable.id.equals(id)).findFirst().orElse(null);
+            varInTable = symbolTable.variableList.stream()
+                    .filter(variable -> variable.id.equals(id))
+                    .findFirst().orElse(null);
+
             if(varInTable != null){
                 return varInTable;
             }

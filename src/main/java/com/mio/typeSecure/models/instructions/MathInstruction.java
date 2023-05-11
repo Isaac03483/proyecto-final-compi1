@@ -6,8 +6,8 @@ import java.util.List;
 
 public class MathInstruction extends Instruction {
 
-    private List<Instruction> instructions;
-    private MathType mathType;
+    public List<Instruction> instructions;
+    public MathType mathType;
 
     public MathInstruction(int line, int column, MathType mathType, List<Instruction> instructions) {
         super(line, column);

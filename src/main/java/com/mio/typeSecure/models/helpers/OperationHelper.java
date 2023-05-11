@@ -1,4 +1,4 @@
-package com.mio.typeSecure.utils;
+package com.mio.typeSecure.models.helpers;
 
 import com.mio.typeSecure.models.instructions.Variable;
 import com.mio.typeSecure.models.instructions.VariableType;
@@ -256,6 +256,12 @@ public class OperationHelper {
 
     public static void notEQ(String left, String right, Variable result){
         boolean resultValue = !left.equals(right);
+        result.value = String.valueOf(resultValue);
+        result.variableType = VariableType.BOOLEAN;
+    }
+
+    public static void not(String right, Variable result){
+        boolean resultValue = !Boolean.parseBoolean(right);
         result.value = String.valueOf(resultValue);
         result.variableType = VariableType.BOOLEAN;
     }

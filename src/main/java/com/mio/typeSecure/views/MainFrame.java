@@ -147,6 +147,10 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
         // TODO add your handling code here:
+        if(this.filesTabbedPane.getSelectedComponent() == null){
+            return;
+        }
+
         CompilerPanel compilerPanel = (CompilerPanel) this.filesTabbedPane.getSelectedComponent();
         String fileName = compilerPanel.getFileName() == null? DEFAULT_NAME: compilerPanel.getFilePath();
         boolean result = this.mainController.save(fileName, compilerPanel.getInputArea().getText());
@@ -162,6 +166,10 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void saveAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsButtonActionPerformed
         // TODO add your handling code here:
+        if(this.filesTabbedPane.getSelectedComponent() == null){
+            return;
+        }
+
         CompilerPanel compilerPanel = (CompilerPanel) this.filesTabbedPane.getSelectedComponent();
         boolean result = this.mainController.saveAs(compilerPanel.getInputArea().getText());
 
