@@ -5,6 +5,7 @@ import com.mio.typeSecure.compiler.lexer.TSLexer;
 import com.mio.typeSecure.models.TSError;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import com.mio.typeSecure.models.instructions.*;
 
@@ -90,8 +91,8 @@ terminal Token ABS, CEIL, COS, SIN, TAN, EXP, FLOOR, POW, SQRT, RANDOM, ID, NUMB
 terminal Token STRING_VALUE, SYM, PRINT_AST, SYMBOL_TABLE;
 
 non terminal List<Instruction> main,instructions,ids,declarationList;
-non terminal List<Parameter> parameters;
-non terminal Parameter parameter;
+non terminal List<Instruction> parameters;
+non terminal Instruction parameter;
 non terminal VariableType type,idType;
 non terminal Instruction funInstruction,instruction;
 non terminal Instruction declarationInstruction, assignmentInstruction, ifInstruction, forInstruction, whileInstruction;
@@ -132,7 +133,7 @@ parameters
 	
 parameter
 ::=	ID:id COLON type:variableType
-    {:RESULT = new Parameter(id.value(), variableType);:}
+    {:RESULT = new Parameter(id.line(), id.column(), id.value(), variableType);:}
 	;
 	
 type
@@ -221,7 +222,6 @@ forInstruction
     {:RESULT = new For(fr.line(), fr.column(), d, o, i, list);:}
 	| FOR:fr LPAREN assignmentInstruction:d SEMICOLON w:o SEMICOLON assignmentInDec:i RPAREN LBRACE instructions:list RBRACE
     {:RESULT = new For(fr.line(), fr.column(), d, o, i, list);:}
-	{::}
 	;
 
 assignmentInDec
@@ -304,6 +304,11 @@ callFunction
     {:RESULT = new CallFunction(id.line(), id.column(), id.value(), ids);:}
     | ID:id LPAREN RPAREN
     {:RESULT = new CallFunction(id.line(), id.column(), id.value(), null);:}
+    | PRINT_AST:print LPAREN w:val RPAREN
+    {:RESULT = new CallFunction(print.line(), print.column(), "printAst",Collections.singletonList(val));:}
+    |SYMBOL_TABLE:table LPAREN RPAREN
+    {:RESULT = new CallFunction(table.line(), table.column(), "getSymbolTable", null);:}
+
     | mathFun:math
     {:RESULT = math;:}
     ;
@@ -404,6 +409,8 @@ b
 	{:RESULT = new BinaryOperation(md.line(),md.column(), lft, rgt, OperationType.MOD);:}
 	| c:val
 	{:RESULT = val;:}
+	| c:val DOT stringFun:string
+	{:string.setValue(val);RESULT = string;:}
 	;
 
 c
@@ -448,17 +455,11 @@ d
 	| FALSE:falseVal
 	{:RESULT = new Value(falseVal.line(), falseVal.column(), "false", ValueType.BOOLEAN);:}
 
-    | STRING_VALUE:value DOT stringFun:stringFun
-	{:stringFun.setValue(value.value()); RESULT = stringFun;:}
-
 	| STRING_VALUE:string
 	{:RESULT = new Value(string.line(), string.column(), string.value(), ValueType.STRING_VALUE);:}
 
 	| ID:id
 	{:RESULT = new Value(id.line(), id.column(), id.value(), ValueType.ID);:}
-
-	| ID:value DOT stringFun:stringFun
-	{:stringFun.setValue(value.value()); RESULT = stringFun;:}
 
 	| callFunction:callFunction
 	{:RESULT = callFunction;:}

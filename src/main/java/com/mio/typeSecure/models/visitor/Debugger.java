@@ -4,7 +4,10 @@ import com.mio.typeSecure.models.TSError;
 import com.mio.typeSecure.models.instructions.*;
 import com.mio.typeSecure.models.helpers.OperationHelper;
 
+import java.sql.SQLOutput;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class Debugger extends Visitor{
@@ -586,8 +589,17 @@ public class Debugger extends Visitor{
     }
 
     @Override
-    public void visit(Break breakInstruction) {
+    public Instruction visit(Break breakInstruction) {
+        if(this.table.parent == null){
+            this.errorList.add(
+                    new TSError(breakInstruction.line,
+                            breakInstruction.column,
+                            "break solo puede ser usado dentro de un ciclo.")
+            );
+            return null;
+        }
 
+        return breakInstruction;
     }
 
     @Override
@@ -803,8 +815,17 @@ public class Debugger extends Visitor{
     }
 
     @Override
-    public void visit(Continue continueInstruction) {
+    public Instruction visit(Continue continueInstruction) {
+        if(this.table.parent == null){
+            this.errorList.add(
+                    new TSError(continueInstruction.line,
+                            continueInstruction.column,
+                            "Continue solo puede ser usado dentro de un ciclo.")
+            );
+            return null;
+        }
 
+        return continueInstruction;
     }
 
     @Override
@@ -849,28 +870,227 @@ public class Debugger extends Visitor{
 
     @Override
     public Variable visit(DoWhile doWhile) {
+
+        this.table = new SymbolTable(this.table);
+        doWhile.instructions.forEach(instruction -> instruction.accept(this));
+        Variable operation = (Variable) doWhile.operation.accept(this);
+
+        if(operation == null){
+            this.errorList.add(
+                    new TSError(
+                            doWhile.line,
+                            doWhile.column,
+                            "No se pudo realizar la operación."
+                    )
+            );
+            return null;
+        }
+
+        if(operation.variableType != VariableType.BOOLEAN){
+            this.errorList.add(
+                    new TSError(
+                            doWhile.line,
+                            doWhile.column,
+                            "La operación necesita ser de tipo BOOLEAN."
+                    )
+            );
+            return null;
+        }
+
         return null;
     }
 
     @Override
-    public Variable visit(Else elseInstruction) {
+    public Object visit(Else elseInstruction) {
+        elseInstruction.instructions.forEach(instruction -> instruction.accept(this));
+        /*
+        for(Instruction instruction: elseInstruction.instructions){
+            if(instruction instanceof ReturnInstruction){
+                return ((ReturnInstruction) instruction).accept(this);
+            } else if(instruction instanceof Break){
+                System.out.println("Encontrando un break en else.");
+            } else if(instruction instanceof Continue){
+                System.out.println("Encontrando un continue en else.");
+            } else if(instruction instanceof If){
+                Object result = instruction.accept(this);
+                if(result instanceof Variable){
+                    this.table = table.parent;
+                    return result;
+                } else if(result instanceof Break){
+                    System.out.println("Recibiendo break de de if.");
+                    this.table = table.parent;
+                } else if (result instanceof Continue) {
+                    System.out.println("Recibiendo continue de if.");
+                    this.table = table.parent;
+                }
+            }
+        }*/
         return null;
     }
 
     @Override
     public Variable visit(For forInstruction) {
+
+        this.table = new SymbolTable(this.table);
+        forInstruction.assignmentBlock.accept(this);
+
+        Variable operation = (Variable) forInstruction.operationBlock.accept(this);
+
+        if(operation == null){
+            this.errorList.add(
+                    new TSError(forInstruction.line,
+                            forInstruction.column,
+                            "No se pudo realizar la operación.")
+            );
+            return null;
+        }
+
+        if(operation.variableType != VariableType.BOOLEAN){
+            this.errorList.add(
+                    new TSError(forInstruction.line,
+                            forInstruction.column,
+                            "La operación debe ser de tipo BOOLEAN.")
+            );
+            return null;
+        }
+
+
+        forInstruction.instructions.forEach(instruction -> instruction.accept(this));
+        forInstruction.incrementBlock.accept(this);
+
+        /*
+        for(Instruction instruction: forInstruction.instructions){
+            if(instruction instanceof ReturnInstruction){
+                return ((ReturnInstruction) instruction).accept(this);
+            } else if(instruction instanceof Break){
+                System.out.println("Encontrando un break.");
+            } else if(instruction instanceof Continue){
+                System.out.println("Encontrando un continue.");
+            } else if(instruction instanceof If){
+                Object result = instruction.accept(this);
+                if(result instanceof Variable){
+                    this.table = table.parent;
+                    return (Variable) result;
+                } else if(result instanceof Break){
+                    System.out.println("Recibiendo break de if.");
+                    this.table = table.parent;
+                } else if (result instanceof Continue) {
+                    System.out.println("Recibiendo continue de if.");
+                    this.table = table.parent;
+                }
+            }
+        }
+        */
+
+
+        this.table = this.table.parent;
         return null;
     }
 
     @Override
     public void visit(Function function) {
 
+        List<Function> functions = this.table.findFunById(function.id);
+
+        if(!functions.isEmpty()){
+            for(Function funInTable: functions){
+                boolean same = isFunEQ(function, funInTable);
+
+                if(same){
+                    this.errorList.add(
+                            new TSError(function.line,
+                                    function.column,
+                                    "Ya se ha declarado una función con mismo nombre y atributos.")
+                    );
+                    return;
+                }
+            }
+        }
+
+        this.table = new SymbolTable(this.table);
+        /*
+        function.symbolTable = this.table;
+        if(function.parameters != null){
+            for(Instruction parameter: function.parameters){
+                Variable result = (Variable) parameter.accept(this);
+                if(result == null){
+                    this.errorList.add(
+                            new TSError(function.line,
+                                    function.column,
+                                    "No se pudo crear la variable.")
+                    );
+                    return;
+                }
+            }
+        }
+
+        List<Variable> variables = getAllReturn(function);
+        */
+
+        this.table = table.parent;
+        this.table.addFunction(function);
+        System.out.println("IMPRIMIENDO FUNCIONES EN LA TABLA");
+        SymbolTable.functions.forEach(fun -> System.out.println(fun.id));
+        System.out.println("FIN DE IMPRESIÓN\n\n");
+
     }
 
     @Override
-    public Variable visit(If ifInstruction) {
+    public Object visit(If ifInstruction) {
+        Variable operation = (Variable) ifInstruction.operation.accept(this);
+        if(operation == null){
+            this.errorList.add(
+                    new TSError(
+                            ifInstruction.line,
+                            ifInstruction.column,
+                            "No se pudo realizar la comparación."
+                    )
+            );
+            return null;
+        }
 
+        this.table = new SymbolTable(this.table);
+        ifInstruction.trueBlock.forEach(instruction -> instruction.accept(this));
+        /*
+        for(Instruction instruction: ifInstruction.trueBlock){
+            if(instruction instanceof ReturnInstruction){
+                this.table = this.table.parent;
+                return instruction.accept(this);
+            } else if( instruction instanceof Break){
+                this.table = this.table.parent;
+                System.out.println("Encontrando un break en if.");
+                return instruction.accept(this);
+            } else if( instruction instanceof Continue){
+                this.table = this.table.parent;
+                System.out.println("Encontrando un continue en if.");
+                return instruction.accept(this);
+            }
 
+            instruction.accept(this);
+        }*/
+        this.table = this.table.parent;
+        if(ifInstruction.falseBlock != null){
+            this.table = new SymbolTable(this.table);
+
+            ifInstruction.falseBlock.accept(this);
+            /*
+            Object result = ifInstruction.falseBlock.accept(this);
+            if(result instanceof Variable){
+                this.table = table.parent;
+                return result;
+            } else if(result instanceof Break){
+                System.out.println("Recibiendo break de else.");
+                this.table = table.parent;
+                return result;
+            } else if (result instanceof Continue) {
+                System.out.println("Recibiendo continue de else.");
+                this.table = table.parent;
+                return result;
+            }*/
+
+            this.table = table.parent;
+
+        }
 
         return null;
     }
@@ -1434,13 +1654,144 @@ public class Debugger extends Visitor{
         return null;
     }
 
+    public Variable visit(Parameter parameter){
+
+        boolean isInTable = this.table.idInTable(parameter.id);
+
+        if(isInTable){
+            this.errorList.add(
+                    new TSError(parameter.line,
+                            parameter.column,
+                            parameter.id+" ya se encuentra definida.")
+            );
+            return null;
+        }
+
+        Variable parameterVar = new Variable();
+        parameterVar.id = parameter.id;
+        parameterVar.variableType = parameter.variableType;
+        parameterVar.declarationType = DeclarationType.LET;
+        switch (parameterVar.variableType){
+            case NUMBER,STRING -> parameterVar.value = "1";
+            case BIG_INT -> parameterVar.value = "10n";
+            case BOOLEAN -> parameterVar.value = "true";
+        }
+
+        this.table.addVariable(parameterVar);
+
+        return parameterVar;
+    }
     @Override
     public Variable visit(ReturnInstruction returnInstruction) {
+        if(this.table.parent == null){
+            this.errorList.add(
+              new TSError(returnInstruction.line,
+                      returnInstruction.column,
+                      "Return solo puede ser usado dentro de una función.")
+            );
+            return null;
+        }
+
+        if(returnInstruction.value != null){
+            Variable value = (Variable) returnInstruction.value.accept(this);
+            if(value == null){
+                this.errorList.add(
+                        new TSError(returnInstruction.line,
+                                returnInstruction.column,
+                                "No se pudo realizar la operación.")
+                );
+                return null;
+            }
+            return value;
+        }
+
         return null;
     }
 
     @Override
     public Variable visit(StringInstruction stringInstruction) {
+        Variable value = (Variable) stringInstruction.value.accept(this);
+
+        if(value == null){
+            this.errorList.add(
+                    new TSError(stringInstruction.line,
+                            stringInstruction.column,
+                            "No se pudo realizar la operación")
+            );
+            return null;
+        }
+
+        if(value.variableType != VariableType.STRING){
+            this.errorList.add(
+                    new TSError(stringInstruction.line,
+                            stringInstruction.column,
+                            "Solo puede realizar este tipo de operaciones con tipos STRING.")
+            );
+            return null;
+        }
+
+        Variable result = new Variable();
+        switch (stringInstruction.type){
+            case CHAR_AT -> {
+                try{
+                    Variable indexVar = (Variable) stringInstruction.instruction.accept(this);
+                    if(indexVar.variableType != VariableType.NUMBER){
+                        this.errorList.add(
+                                new TSError(stringInstruction.line,
+                                        stringInstruction.column,
+                                        "Se esperaba un parámetro tipo NUMBER.")
+                        );
+                        return null;
+                    }
+                    int index = Integer.parseInt(indexVar.value);
+                    result.variableType = VariableType.STRING;
+                    result.value = String.valueOf(value.value.charAt(index));
+                    return result;
+                } catch(IndexOutOfBoundsException e){
+                    this.errorList.add(
+                            new TSError(stringInstruction.line,
+                                    stringInstruction.column,
+                                    "Indice fuera del tamaño de la variable.")
+                    );
+                    return null;
+                }
+            }
+
+            case CONCAT -> {
+                Variable attribute = (Variable) stringInstruction.instruction.accept(this);
+                if(attribute.variableType != VariableType.STRING){
+                    this.errorList.add(
+                            new TSError(stringInstruction.line,
+                                    stringInstruction.column,
+                                    "Se esperaba un valor tipo STRING.")
+                    );
+                    return null;
+                }
+
+                result.variableType = VariableType.STRING;
+                result.value = value.value.concat(attribute.value);
+                return result;
+            }
+
+            case LENGTH -> {
+                result.variableType = VariableType.NUMBER;
+                result.value = String.valueOf(value.value.length());
+                return result;
+            }
+
+            case LOWER -> {
+                result.variableType = VariableType.STRING;
+                result.value = value.value.toLowerCase(Locale.ROOT);
+                return result;
+            }
+
+            case UPPER -> {
+                result.variableType = VariableType.STRING;
+                result.value = value.value.toUpperCase(Locale.ROOT);
+                return result;
+            }
+        }
+
         return null;
     }
 
@@ -1691,6 +2042,103 @@ public class Debugger extends Visitor{
 
     @Override
     public Variable visit(While whileInstruction) {
+        Variable operation = (Variable) whileInstruction.operation.accept(this);
+
+        if(operation == null){
+            this.errorList.add(
+                    new TSError(
+                            whileInstruction.line,
+                            whileInstruction.column,
+                            "No se pudo realizar la operación."
+                    )
+            );
+            return null;
+        }
+
+        if(operation.variableType != VariableType.BOOLEAN){
+            this.errorList.add(
+                    new TSError(
+                            whileInstruction.line,
+                            whileInstruction.column,
+                            "La operación necesita ser de tipo BOOLEAN."
+                    )
+            );
+            return null;
+        }
+
+        this.table = new SymbolTable(this.table);
+        whileInstruction.instructions.forEach(instruction -> instruction.accept(this));
+        this.table = this.table.parent;
         return null;
     }
+
+    public List<Variable> getAllReturn(Function function){
+        List<Variable> resultList = new ArrayList<>();
+
+        getAllReturn(function.instructions, resultList);
+
+        return resultList;
+
+    }
+
+    public void getAllReturn(List<Instruction> instructions, List<Variable> resultList){
+        for(Instruction instruction: instructions){
+
+            if(instruction instanceof If anIf){
+                getAllReturn(anIf.trueBlock, resultList);
+                if(anIf.falseBlock != null){
+                    if(anIf.falseBlock instanceof Else anElse){
+                        getAllReturn(anElse.instructions, resultList);
+                    } else if(anIf.falseBlock instanceof If ifI) {
+                        getAllReturn(ifI.trueBlock, resultList);
+                    }
+                }
+            } else if(instruction instanceof Else elseI){
+                getAllReturn( elseI.instructions, resultList);
+            } else if(instruction instanceof For forI){
+                getAllReturn( forI.instructions, resultList);
+            } else if(instruction instanceof DoWhile doWhile){
+                getAllReturn( doWhile.instructions, resultList);
+            } else if(instruction instanceof While whileI){
+                getAllReturn( whileI.instructions, resultList);
+            } else if(instruction instanceof ReturnInstruction returnI){
+                Variable variable = returnI.accept(this);
+                resultList.add(variable);
+            } else {
+                instruction.accept(this);
+            }
+        }
+    }
+
+    public boolean isFunEQ(Function newFun, Function funInTable){
+        if(newFun.parameters == null && funInTable.parameters == null){
+            return true;
+        }
+
+        if(newFun.parameters != null){
+            if(funInTable.parameters == null){
+                return false;
+            }
+
+            if(newFun.parameters.size() != funInTable.parameters.size()){
+                return false;
+            }
+
+            for(int i = 0; i < newFun.parameters.size(); i++){
+                Parameter p1 = (Parameter) newFun.parameters.get(i);
+                Parameter p2 = (Parameter) funInTable.parameters.get(i);
+
+                if(p1.variableType != p2.variableType){
+                    return false;
+                }
+
+            }
+
+            return true;
+        }
+
+        return false;
+
+    }
+
 }

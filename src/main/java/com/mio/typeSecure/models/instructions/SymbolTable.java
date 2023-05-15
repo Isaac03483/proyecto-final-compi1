@@ -2,13 +2,14 @@ package com.mio.typeSecure.models.instructions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SymbolTable{
 
-    private final List<Variable> variableList;
+    public final List<Variable> variableList;
 
-    private SymbolTable parent;
-    private static List<Function> functions;
+    public SymbolTable parent;
+    public static List<Function> functions;
 
     public SymbolTable(SymbolTable parent) {
         this.parent = parent;
@@ -49,8 +50,8 @@ public class SymbolTable{
         functions.add(function);
     }
 
-    public Function findFunById(String id){
-        return functions.stream().filter(function -> function.id.equals(id)).findFirst().orElse(null);
+    public List<Function> findFunById(String id){
+        return functions.stream().filter(function -> function.id.equals(id)).collect(Collectors.toList());
     }
 
     public boolean funInTable(String id){

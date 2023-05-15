@@ -2,6 +2,7 @@ package com.mio.typeSecure.controllers;
 
 import com.mio.typeSecure.compiler.lexer.TSLexer;
 import com.mio.typeSecure.compiler.parser.TSParser;
+import com.mio.typeSecure.models.helpers.ReportHelper;
 import com.mio.typeSecure.models.instructions.Instruction;
 import com.mio.typeSecure.models.TSError;
 import com.mio.typeSecure.models.instructions.SymbolTable;
@@ -50,10 +51,11 @@ public class TSParserController {
         });
 
         if(!errors.isEmpty()){
+            ReportHelper.createErrorReport(errors);
             return errors.stream().map(TSError::toString).toList();
         }
 
-        table.getVariableList().forEach(System.out::println);
+//        table.getVariableList().forEach(System.out::println);
         //TODO: usar un visitor para correr el programa.
 
         return out;

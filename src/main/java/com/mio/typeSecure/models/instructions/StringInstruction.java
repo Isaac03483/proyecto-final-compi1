@@ -6,22 +6,22 @@ import java.util.List;
 
 public class StringInstruction extends Instruction{
 
-    private String value;
-    private StringType type;
-    private Instruction instruction;
+    public Instruction value;
+    public StringType type;
+    public Instruction instruction;
 
-    public StringInstruction(int line, int column, String value, StringType type, Instruction instruction) {
+    public StringInstruction(int line, int column, Instruction value, StringType type, Instruction instruction) {
         super(line, column);
         this.value = value;
         this.type = type;
         this.instruction = instruction;
     }
 
-    public String getValue() {
+    public Instruction getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Instruction value) {
         this.value = value;
     }
 

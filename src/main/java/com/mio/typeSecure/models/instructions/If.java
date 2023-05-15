@@ -6,9 +6,9 @@ import java.util.List;
 
 public class If extends Instruction{
 
-    private Instruction operation;
-    private List<Instruction> trueBlock;
-    private Instruction falseBlock;
+    public Instruction operation;
+    public List<Instruction> trueBlock;
+    public Instruction falseBlock;
 
     public If(int line, int column, Instruction operation, List<Instruction> trueBlock, Instruction falseBlock) {
         super(line, column);
@@ -18,7 +18,7 @@ public class If extends Instruction{
     }
 
     @Override
-    public Variable accept(Visitor visitor) {
+    public Object accept(Visitor visitor) {
         return visitor.visit(this);
     }
 }

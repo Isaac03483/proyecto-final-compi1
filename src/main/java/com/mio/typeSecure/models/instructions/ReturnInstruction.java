@@ -4,7 +4,7 @@ import com.mio.typeSecure.models.visitor.Visitor;
 
 public class ReturnInstruction extends Instruction{
 
-    private Instruction value;
+    public Instruction value;
 
     public ReturnInstruction(int line, int column, Instruction value) {
         super(line, column);

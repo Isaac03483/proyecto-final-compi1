@@ -12,18 +12,19 @@ public abstract class Visitor {
 
     public abstract Variable visit(Assignment assignment);
     public abstract Variable visit(BinaryOperation binaryOperation);
-    public abstract void visit(Break breakInstruction);
+    public abstract Instruction visit(Break breakInstruction);
     public abstract Variable visit(Cast cast);
     public abstract Variable visit(CallFunction callFunction);
     public abstract void visit(ConsoleLog consoleLog);
-    public abstract void visit(Continue continueInstruction);
+    public abstract Instruction visit(Continue continueInstruction);
     public abstract void visit(Declaration declaration);
     public abstract Variable visit(DoWhile doWhile);
-    public abstract Variable visit(Else elseInstruction);
+    public abstract Object visit(Else elseInstruction);
     public abstract Variable visit(For forInstruction);
     public abstract void visit(Function function);
-    public abstract Variable visit(If ifInstruction);
+    public abstract Object visit(If ifInstruction);
     public abstract Variable visit(MathInstruction mathInstruction);
+    public abstract Variable visit(Parameter parameter);
     public abstract Variable visit(ReturnInstruction returnInstruction);
     public abstract Variable visit(StringInstruction stringInstruction);
     public abstract Variable visit(UnaryOperation unaryOperation);

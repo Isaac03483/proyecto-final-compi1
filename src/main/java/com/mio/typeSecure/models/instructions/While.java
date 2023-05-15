@@ -6,8 +6,8 @@ import java.util.List;
 
 public class While extends Instruction{
 
-    private Instruction operation;
-    private List<Instruction> instructions;
+    public Instruction operation;
+    public List<Instruction> instructions;
 
     public While(int line, int column, Instruction operation, List<Instruction> instructions) {
         super(line, column);

@@ -17,4 +17,12 @@ public class UnaryOperation extends Instruction{
     public Variable accept(Visitor visitor) {
         return visitor.visit(this);
     }
+
+    @Override
+    public String toString() {
+        return "UnaryOperation{" +
+                "rightInstruction=" + rightInstruction +
+                ", operationType=" + operationType +
+                '}';
+    }
 }

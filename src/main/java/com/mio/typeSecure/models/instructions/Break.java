@@ -9,9 +9,8 @@ public class Break extends Instruction{
     }
 
     @Override
-    public Variable accept(Visitor visitor) {
-        visitor.visit(this);
-        return null;
+    public Instruction accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 
 }

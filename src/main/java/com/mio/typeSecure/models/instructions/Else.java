@@ -14,7 +14,7 @@ public class Else extends Instruction{
     }
 
     @Override
-    public Variable accept(Visitor visitor) {
+    public Object accept(Visitor visitor) {
         return visitor.visit(this);
     }
 }
