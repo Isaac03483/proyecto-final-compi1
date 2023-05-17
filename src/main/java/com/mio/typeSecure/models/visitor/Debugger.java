@@ -389,7 +389,7 @@ public class Debugger extends Visitor{
                     return null;
                 }
 
-                OperationHelper.equals(left.value, right.value, result);
+                OperationHelper.equals(left.value, right.value, result, left.variableType);
                 return result;
             }
 
@@ -416,7 +416,7 @@ public class Debugger extends Visitor{
                     return null;
                 }
 
-                OperationHelper.notEQ(left.value, right.value, result);
+                OperationHelper.notEQ(left.value, right.value, result, left.variableType);
                 return result;
             }
 
@@ -872,7 +872,6 @@ public class Debugger extends Visitor{
     public Variable visit(DoWhile doWhile) {
 
         this.table = new SymbolTable(this.table);
-        doWhile.instructions.forEach(instruction -> instruction.accept(this));
         Variable operation = (Variable) doWhile.operation.accept(this);
 
         if(operation == null){
@@ -896,7 +895,9 @@ public class Debugger extends Visitor{
             );
             return null;
         }
+        doWhile.instructions.forEach(instruction -> instruction.accept(this));
 
+        this.table = this.table.parent;
         return null;
     }
 

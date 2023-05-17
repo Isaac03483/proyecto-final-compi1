@@ -13,7 +13,7 @@ public class OperationHelper {
                 double leftNumber = Double.parseDouble(left);
                 double rightNumber = Double.parseDouble(right);
                 double resultValue = leftNumber + rightNumber;
-                result.value = String.valueOf(resultValue);
+                result.value = String.valueOf(resultValue % 1 == 0 ? (int) resultValue : resultValue);
                 result.variableType = VariableType.NUMBER;
 
             }
@@ -40,7 +40,7 @@ public class OperationHelper {
                 double leftNumber = Double.parseDouble(left);
                 double rightNumber = Double.parseDouble(right);
                 double resultValue = leftNumber - rightNumber;
-                result.value = String.valueOf(resultValue);
+                result.value = String.valueOf(resultValue % 1 == 0 ? (int) resultValue : resultValue);
                 result.variableType = VariableType.NUMBER;
 
             }
@@ -61,7 +61,7 @@ public class OperationHelper {
                 double leftNumber = Double.parseDouble(left);
                 double rightNumber = Double.parseDouble(right);
                 double resultValue = leftNumber * rightNumber;
-                result.value = String.valueOf(resultValue);
+                result.value = String.valueOf(resultValue % 1 == 0 ? (int) resultValue : resultValue);
                 result.variableType = VariableType.NUMBER;
 
             }
@@ -82,7 +82,7 @@ public class OperationHelper {
                 double leftNumber = Double.parseDouble(left);
                 double rightNumber = Double.parseDouble(right);
                 double resultValue = leftNumber / rightNumber;
-                result.value = String.valueOf(resultValue);
+                result.value = String.valueOf(resultValue % 1 == 0 ? (int) resultValue : resultValue);
                 result.variableType = VariableType.NUMBER;
 
             }
@@ -104,7 +104,7 @@ public class OperationHelper {
                 double leftNumber = Double.parseDouble(left);
                 double rightNumber = Double.parseDouble(right);
                 double resultValue = leftNumber % rightNumber;
-                result.value = String.valueOf(resultValue);
+                result.value = String.valueOf(resultValue % 1 == 0 ? (int) resultValue : resultValue);
                 result.variableType = VariableType.NUMBER;
 
             }
@@ -248,15 +248,57 @@ public class OperationHelper {
         result.variableType = VariableType.BOOLEAN;
     }
 
-    public static void equals(String left, String right, Variable result){
-        boolean resultValue = left.equals(right);
-        result.value = String.valueOf(resultValue);
+    public static void equals(String left, String right, Variable result, VariableType type){
+
+        switch (type) {
+            case NUMBER -> {
+
+                double leftNumber = Double.parseDouble(left);
+                double rightNumber = Double.parseDouble(right);
+                boolean resultValue = leftNumber == rightNumber;
+                result.value = String.valueOf(resultValue);
+
+            }
+            case BIG_INT -> {
+                int leftNumber = getIntBigPart(left);
+                int rightNumber = getIntBigPart(right);
+                boolean resultValue = leftNumber == rightNumber;
+                result.value = String.valueOf(resultValue);
+            }
+
+            default -> {
+                boolean resultValue = left.equals(right);
+                result.value = String.valueOf(resultValue);
+            }
+        }
+
         result.variableType = VariableType.BOOLEAN;
     }
 
-    public static void notEQ(String left, String right, Variable result){
-        boolean resultValue = !left.equals(right);
-        result.value = String.valueOf(resultValue);
+    public static void notEQ(String left, String right, Variable result, VariableType type){
+
+        switch (type) {
+            case NUMBER -> {
+
+                double leftNumber = Double.parseDouble(left);
+                double rightNumber = Double.parseDouble(right);
+                boolean resultValue = leftNumber >= rightNumber;
+                result.value = String.valueOf(resultValue);
+
+            }
+            case BIG_INT -> {
+                int leftNumber = getIntBigPart(left);
+                int rightNumber = getIntBigPart(right);
+                boolean resultValue = leftNumber >= rightNumber;
+                result.value = String.valueOf(resultValue);
+            }
+            default -> {
+                boolean resultValue = !left.equals(right);
+                result.value = String.valueOf(resultValue);
+            }
+        }
+
+
         result.variableType = VariableType.BOOLEAN;
     }
 

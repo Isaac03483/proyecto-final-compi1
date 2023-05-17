@@ -7,6 +7,7 @@ import com.mio.typeSecure.models.instructions.Instruction;
 import com.mio.typeSecure.models.TSError;
 import com.mio.typeSecure.models.instructions.SymbolTable;
 import com.mio.typeSecure.models.visitor.Debugger;
+import com.mio.typeSecure.models.visitor.Runner;
 import com.mio.typeSecure.models.visitor.Visitor;
 
 import java.io.StringReader;
@@ -57,6 +58,9 @@ public class TSParserController {
 
 //        table.getVariableList().forEach(System.out::println);
         //TODO: usar un visitor para correr el programa.
+        SymbolTable runnerTable = new SymbolTable();
+        Visitor runner = new Runner(runnerTable, out, errors);
+        instructions.forEach(instruction -> instruction.accept(runner));
 
         return out;
     }

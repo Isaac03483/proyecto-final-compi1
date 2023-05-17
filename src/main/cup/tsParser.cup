@@ -302,10 +302,13 @@ assignmentInstruction
 callFunction
 ::= ID:id LPAREN ids:ids RPAREN
     {:RESULT = new CallFunction(id.line(), id.column(), id.value(), ids);:}
+
     | ID:id LPAREN RPAREN
     {:RESULT = new CallFunction(id.line(), id.column(), id.value(), null);:}
+
     | PRINT_AST:print LPAREN w:val RPAREN
     {:RESULT = new CallFunction(print.line(), print.column(), "printAst",Collections.singletonList(val));:}
+
     |SYMBOL_TABLE:table LPAREN RPAREN
     {:RESULT = new CallFunction(table.line(), table.column(), "getSymbolTable", null);:}
 
