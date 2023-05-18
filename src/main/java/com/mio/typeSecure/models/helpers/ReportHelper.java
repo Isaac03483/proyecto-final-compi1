@@ -13,6 +13,7 @@ public class ReportHelper {
     public static final String TABLE_REPORT_NAME = "table.html";
     public static final String ERROR_REPORT_NAME = "error.html";
     public static final String HTML_O = "<html>\n";
+    public static final String HEAD = "\t<head>\n\t\t<meta charset=\"UTF-8\">\n\t</head>";
     public static final String HTML_C = "</html>\n";
     public static final String BODY_O = "\t<body>\n";
     public static final String BODY_C = "\t</body>\n";
@@ -34,6 +35,7 @@ public class ReportHelper {
         StringBuilder content = new StringBuilder();
         try(FileWriter writer = new FileWriter(file)){
             content.append(HTML_O);
+            content.append(HEAD);
             content.append(BODY_O);
 
             content.append(TABLE_O);
@@ -76,29 +78,54 @@ public class ReportHelper {
         try(FileWriter writer = new FileWriter(file)){
 
             content.append(HTML_O);
+            content.append(HEAD);
             content.append(BODY_O);
 
             content.append(TABLE_O);
 
             content.append(THEAD_O);
+            content.append(TR_O);
 
+            content.append(TH_O).append("Linea").append(TH_C);
+            content.append(TH_O).append("Columna").append(TH_C);
             content.append(TH_O).append("Id").append(TH_C);
+            content.append(TH_O).append("Tipo de declaracion").append(TH_C);
             content.append(TH_O).append("Tipo de Variable").append(TH_C);
             content.append(TH_O).append("Valor").append(TH_C);
-            content.append(TH_O).append("Tipo de declaración").append(TH_C);
+            content.append(TR_C);
 
             content.append(THEAD_C);
 
             content.append(TBODY_O);
 
-            table.variableList.forEach(variable -> {
+            SymbolTable currentTable = table;
+
+            while(currentTable != null){
+                currentTable.variableList.forEach(variable -> {
+                    content.append(TR_O);
+                    content.append(TD_O).append(variable.line).append(TD_C);
+                    content.append(TD_O).append(variable.column).append(TD_C);
+                    content.append(TD_O).append(variable.id).append(TD_C);
+                    content.append(TD_O).append(variable.declarationType).append(TD_C);
+                    content.append(TD_O).append(variable.variableType).append(TD_C);
+                    content.append(TD_O).append(variable.value).append(TD_C);
+                    content.append(TR_C);
+                });
+
+                currentTable = currentTable.parent;
+            }
+
+            SymbolTable.functions.forEach(function -> {
                 content.append(TR_O);
-                content.append(TD_O).append(variable.id).append(TD_C);
-                content.append(TD_O).append(variable.variableType).append(TD_C);
-                content.append(TD_O).append(variable.value).append(TD_C);
-                content.append(TD_O).append(variable.declarationType).append(TD_C);
+                content.append(TD_O).append(function.line).append(TD_C);
+                content.append(TD_O).append(function.column).append(TD_C);
+                content.append(TD_O).append(function.id).append(TD_C);
+                content.append(TD_O).append(TD_C);
+                content.append(TD_O).append(function.returnType).append(TD_C);
+                content.append(TD_O).append(function.parameters != null? function.parameters.size(): 0).append(TD_C);
                 content.append(TR_C);
             });
+
             content.append(TBODY_C);
 
             content.append(TABLE_C);

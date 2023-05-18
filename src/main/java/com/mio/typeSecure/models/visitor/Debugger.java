@@ -1,6 +1,7 @@
 package com.mio.typeSecure.models.visitor;
 
 import com.mio.typeSecure.models.TSError;
+import com.mio.typeSecure.models.helpers.ReportHelper;
 import com.mio.typeSecure.models.instructions.*;
 import com.mio.typeSecure.models.helpers.OperationHelper;
 
@@ -793,6 +794,28 @@ public class Debugger extends Visitor{
 
     @Override
     public Variable visit(CallFunction callFunction) {
+        switch (callFunction.id){
+            case "getSymbolTable" -> {
+                if(this.table == null){
+                    this.errorList.add(
+                            new TSError(
+                                    callFunction.line,
+                                    callFunction.column,
+                                    "Algo salió mal al crear el HTML."
+                            )
+                    );
+                    return null;
+                }
+            }
+
+            case "printAst" -> {
+
+            }
+
+            default -> {
+
+            }
+        }
         return null;
     }
 
@@ -856,6 +879,8 @@ public class Debugger extends Visitor{
 
 
             var.declarationType = declaration.type;
+            var.line = declaration.line;
+            var.column = declaration.column;
             boolean exist = table.idInTable(var.id);
 
             if(exist){
@@ -1009,7 +1034,7 @@ public class Debugger extends Visitor{
         }
 
         this.table = new SymbolTable(this.table);
-        /*
+
         function.symbolTable = this.table;
         if(function.parameters != null){
             for(Instruction parameter: function.parameters){
@@ -1026,13 +1051,72 @@ public class Debugger extends Visitor{
         }
 
         List<Variable> variables = getAllReturn(function);
-        */
+
+        if(variables.isEmpty()){
+
+            if(function.returnType == null){
+                function.returnType = ReturnType.VOID;
+                this.table = table.parent;
+                this.table.addFunction(function);
+                return;
+            }
+
+            if(function.returnType != ReturnType.VOID){
+                this.errorList.add(
+                        new TSError(function.line,
+                                function.column,
+                                "Los valores de retorno no coinciden con el tipo de función.")
+                );
+                return;
+            }
+        } else {
+            Variable firstReturn = variables.get(0);
+            boolean hasDifferentType = variables.stream().anyMatch(var -> var != null && var.variableType != firstReturn.variableType);
+            if(hasDifferentType){
+                this.errorList.add(
+                        new TSError(function.line,
+                                function.column,
+                                "Los valores de retorno no coinciden.")
+                );
+                return;
+            }
+
+            if(function.returnType == null){
+                switch (firstReturn.variableType){
+                    case STRING -> function.returnType = ReturnType.STRING;
+                    case NUMBER -> function.returnType = ReturnType.NUMBER;
+                    case BIG_INT -> function.returnType = ReturnType.BIG_INT;
+                    case BOOLEAN -> function.returnType = ReturnType.BOOLEAN;
+                    case VOID -> function.returnType = ReturnType.VOID;
+                }
+                this.table = table.parent;
+                this.table.addFunction(function);
+                return;
+            }
+
+            if(!function.returnType.toString().equals(firstReturn.variableType.toString())){
+                this.errorList.add(
+                        new TSError(function.line,
+                                function.column,
+                                "Los valores de retorno no coinciden con el tipo de función.")
+                );
+                return;
+            }
+
+            if(!(function.instructions.get(function.instructions.size()-1) instanceof ReturnInstruction)){
+                this.errorList.add(
+                        new TSError(function.line,
+                                function.column,
+                                "Se esperaba un valor de retorno al final de la función.")
+                );
+                return;
+            }
+        }
+
+
 
         this.table = table.parent;
         this.table.addFunction(function);
-        System.out.println("IMPRIMIENDO FUNCIONES EN LA TABLA");
-        SymbolTable.functions.forEach(fun -> System.out.println(fun.id));
-        System.out.println("FIN DE IMPRESIÓN\n\n");
 
     }
 
@@ -1692,9 +1776,11 @@ public class Debugger extends Visitor{
             );
             return null;
         }
-
+        Variable value = new Variable();
+        value.line = returnInstruction.line;
+        value.column = returnInstruction.column;
         if(returnInstruction.value != null){
-            Variable value = (Variable) returnInstruction.value.accept(this);
+             value = (Variable) returnInstruction.value.accept(this);
             if(value == null){
                 this.errorList.add(
                         new TSError(returnInstruction.line,
@@ -1706,7 +1792,11 @@ public class Debugger extends Visitor{
             return value;
         }
 
-        return null;
+        value.variableType = VariableType.VOID;
+        value.declarationType = DeclarationType.LET;
+        value.id = "void";
+
+        return value;
     }
 
     @Override
@@ -2105,7 +2195,7 @@ public class Debugger extends Visitor{
             } else if(instruction instanceof ReturnInstruction returnI){
                 Variable variable = returnI.accept(this);
                 resultList.add(variable);
-            } else {
+            } else if(!(instruction instanceof ConsoleLog)){
                 instruction.accept(this);
             }
         }

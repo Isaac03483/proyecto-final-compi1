@@ -6,6 +6,8 @@ public class Variable implements Cloneable{
     public VariableType variableType;
     public String value = "undefined";
     public DeclarationType declarationType;
+    public int line;
+    public int column;
 
 
     @Override
@@ -15,6 +17,8 @@ public class Variable implements Cloneable{
                 ", variableType=" + variableType +
                 ", value='" + value + '\'' +
                 ", declarationType=" + declarationType +
+                ", line=" + line +
+                ", column=" + column +
                 '}';
     }
 

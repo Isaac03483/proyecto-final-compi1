@@ -97,7 +97,7 @@ non terminal VariableType type,idType;
 non terminal Instruction funInstruction,instruction;
 non terminal Instruction declarationInstruction, assignmentInstruction, ifInstruction, forInstruction, whileInstruction;
 non terminal Instruction doWhileInstruction,elseIfInstruction,assignmentInDec;
-non terminal Instruction inDecInstruction, callFunction,consoleInstruction,a,b,c,d,w,x,y,z;
+non terminal Instruction inDecInstruction, callFunction,consoleInstruction,a,b,c,d,e,w,x,y,z;
 non terminal Instruction continueInstruction, breakInstruction, returnInstruction, mathFun, mathConst;
 non terminal ReturnType returnType;
 non terminal StringInstruction stringFun;
@@ -412,11 +412,16 @@ b
 	{:RESULT = new BinaryOperation(md.line(),md.column(), lft, rgt, OperationType.MOD);:}
 	| c:val
 	{:RESULT = val;:}
-	| c:val DOT stringFun:string
-	{:string.setValue(val);RESULT = string;:}
 	;
 
 c
+::= d:val
+	{:RESULT = val;:}
+	| d:val DOT stringFun:string
+	{:string.setValue(val);RESULT = string;:}
+	;
+
+d
 ::=	castFun:cast LPAREN w:val RPAREN
     {:
     switch(cast.type()){
@@ -437,15 +442,15 @@ c
 
     }
     :}
-	| MINUS:m d:d
+	| MINUS:m e:d
 	{:RESULT = new UnaryOperation(m.line(), m.column(), d, OperationType.MINUS);:}
-	| PLUS d:d
+	| PLUS e:d
 	{:RESULT = d;:}
-	| d:d
+	| e:d
 	{:RESULT = d;:}
 	;
 	
-d
+e
 ::=	NUMBER_VALUE:number
 	{:RESULT = new Value(number.line(), number.column(), number.value(), ValueType.NUMBER_VALUE);:}
 

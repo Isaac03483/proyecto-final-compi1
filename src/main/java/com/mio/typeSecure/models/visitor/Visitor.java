@@ -2,6 +2,9 @@ package com.mio.typeSecure.models.visitor;
 
 import com.mio.typeSecure.models.instructions.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class Visitor {
 
     public SymbolTable table;
@@ -32,4 +35,5 @@ public abstract class Visitor {
     public abstract Variable visit(VariableDeclaration variableDeclaration);
 
     public abstract Variable visit(While whileInstruction);
+
 }

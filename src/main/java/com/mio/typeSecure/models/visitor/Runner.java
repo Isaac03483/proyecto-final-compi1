@@ -2,8 +2,10 @@ package com.mio.typeSecure.models.visitor;
 
 import com.mio.typeSecure.models.TSError;
 import com.mio.typeSecure.models.helpers.OperationHelper;
+import com.mio.typeSecure.models.helpers.ReportHelper;
 import com.mio.typeSecure.models.instructions.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -795,6 +797,30 @@ public class Runner extends Visitor{
 
     @Override
     public Variable visit(CallFunction callFunction) {
+        switch (callFunction.id){
+            case "getSymbolTable" -> {
+                if(this.table == null){
+                    this.errorList.add(
+                            new TSError(
+                                    callFunction.line,
+                                    callFunction.column,
+                                    "Algo salió mal al crear el HTML."
+                            )
+                    );
+                    return null;
+                }
+
+                ReportHelper.createTableReport(this.table);
+            }
+
+            case "printAst" -> {
+
+            }
+
+            default -> {
+
+            }
+        }
         return null;
     }
 
@@ -822,7 +848,9 @@ public class Runner extends Visitor{
 
     @Override
     public Continue visit(Continue continueInstruction) {
+        System.out.println("ENTRANDO A METODO VISIT CONTINUE");
         if(this.table.parent == null){
+            System.out.println("No hay padre, saliendo...");
             this.errorList.add(
                     new TSError(continueInstruction.line,
                             continueInstruction.column,
@@ -832,6 +860,7 @@ public class Runner extends Visitor{
         }
 
         this.table = this.table.parent;
+        System.out.println("Ejecutando continue.");
         return continueInstruction;
     }
 
@@ -863,6 +892,8 @@ public class Runner extends Visitor{
 
 
             var.declarationType = declaration.type;
+            var.line = declaration.line;
+            var.column = declaration.column;
             boolean exist = table.idInTable(var.id);
 
             if(exist){
@@ -908,7 +939,36 @@ public class Runner extends Visitor{
         boolean booleanOperation = Boolean.parseBoolean(operation.value);
 
         while(booleanOperation){
-            doWhile.instructions.forEach(instruction -> instruction.accept(this));
+//            doWhile.instructions.forEach(instruction -> instruction.accept(this));
+
+            for(Instruction instruction: doWhile.instructions){
+                if(instruction instanceof If ifIn){
+                    Object object = ifIn.accept(this);
+
+                    if(object != null){
+                        if(object instanceof Break breakIn){
+                            return null;
+                        } else if(object instanceof Continue continueIn){
+                            System.out.println("Encontrando continue en if");
+                            break;
+                        }
+                    }
+
+                } else if(instruction instanceof While whileIn){
+                    //TODO: verificar que lo retornado sea una variable (return)
+                } else if(instruction instanceof DoWhile doWhileIn){
+                    //TODO: verificar que lo retornado sea una variable (return)
+                } else if(instruction instanceof Break breakIn){
+                    return null;
+                } else if (instruction instanceof Continue continueIn){
+                    System.out.println("Encontrando un continue.");
+                    break;
+                } else {
+                    instruction.accept(this);
+                }
+            }
+
+
             operation = (Variable) doWhile.operation.accept(this);
             booleanOperation = Boolean.parseBoolean(operation.value);
         }
@@ -1002,7 +1062,34 @@ public class Runner extends Visitor{
 
         while (booleanOperation){
 
-            forInstruction.instructions.forEach(instruction -> instruction.accept(this));
+//            forInstruction.instructions.forEach(instruction -> instruction.accept(this));
+            for(Instruction instruction: forInstruction.instructions){
+                if(instruction instanceof If ifIn){
+                    Object object = ifIn.accept(this);
+
+                    if(object != null){
+                        if(object instanceof Break breakIn){
+                            return null;
+                        } else if(object instanceof Continue continueIn){
+                            System.out.println("Encontrando continue en if");
+                            break;
+                        }
+                    }
+
+                } else if(instruction instanceof While whileIn){
+                    //TODO: verificar que lo retornado sea una variable (return)
+                } else if(instruction instanceof DoWhile doWhileIn){
+                    //TODO: verificar que lo retornado sea una variable (return)
+                } else if(instruction instanceof Break breakIn){
+                    return null;
+                } else if (instruction instanceof Continue continueIn){
+                    System.out.println("Encontrando un continue.");
+                    break;
+                } else {
+                    instruction.accept(this);
+                }
+            }
+
             forInstruction.incrementBlock.accept(this);
             operation = (Variable) forInstruction.operationBlock.accept(this);
             booleanOperation = Boolean.parseBoolean(operation.value);
@@ -1039,7 +1126,97 @@ public class Runner extends Visitor{
 
     @Override
     public void visit(Function function) {
+        List<Function> functions = this.table.findFunById(function.id);
 
+        if(!functions.isEmpty()){
+            for(Function funInTable: functions){
+                boolean same = isFunEQ(function, funInTable);
+
+                if(same){
+                    this.errorList.add(
+                            new TSError(function.line,
+                                    function.column,
+                                    "Ya se ha declarado una función con mismo nombre y atributos.")
+                    );
+                    return;
+                }
+            }
+        }
+
+        this.table = new SymbolTable(this.table);
+
+        function.symbolTable = this.table;
+        if(function.parameters != null){
+            for(Instruction parameter: function.parameters){
+                Variable result = (Variable) parameter.accept(this);
+                if(result == null){
+                    this.errorList.add(
+                            new TSError(function.line,
+                                    function.column,
+                                    "No se pudo crear la variable.")
+                    );
+                    return;
+                }
+            }
+        }
+
+        List<Variable> variables = getAllReturn(function);
+
+        if(variables.isEmpty()){
+
+            if(function.returnType == null){
+                function.returnType = ReturnType.VOID;
+                this.table = table.parent;
+                this.table.addFunction(function);
+                return;
+            }
+
+            if(function.returnType != ReturnType.VOID){
+                this.errorList.add(
+                        new TSError(function.line,
+                                function.column,
+                                "Los valores de retorno no coinciden con el tipo de función.")
+                );
+                return;
+            }
+        } else {
+            Variable firstReturn = variables.get(0);
+            boolean hasDifferentType = variables.stream().anyMatch(var -> var.variableType != firstReturn.variableType);
+            if(hasDifferentType){
+                this.errorList.add(
+                        new TSError(function.line,
+                                function.column,
+                                "Los valores de retorno no coinciden.")
+                );
+                return;
+            }
+
+            if(function.returnType == null){
+                switch (firstReturn.variableType){
+                    case STRING -> function.returnType = ReturnType.STRING;
+                    case NUMBER -> function.returnType = ReturnType.NUMBER;
+                    case BIG_INT -> function.returnType = ReturnType.BIG_INT;
+                    case BOOLEAN -> function.returnType = ReturnType.BOOLEAN;
+                }
+                this.table = table.parent;
+                this.table.addFunction(function);
+                return;
+            }
+
+            if(!function.returnType.toString().equals(firstReturn.variableType.toString())){
+                this.errorList.add(
+                        new TSError(function.line,
+                                function.column,
+                                "Los valores de retorno no coinciden con el tipo de función.")
+                );
+                return;
+            }
+        }
+
+
+
+        this.table = table.parent;
+        this.table.addFunction(function);
     }
 
     @Override
@@ -1113,9 +1290,9 @@ public class Runner extends Visitor{
             }
 
             if(object instanceof Break breakIn){
-                return breakIn.accept(this);
+                return breakIn;
             } else if(object instanceof Continue continueIn){
-                return continueIn.accept(this);
+                return continueIn;
             }
 
         }
@@ -1717,7 +1894,35 @@ public class Runner extends Visitor{
 
     @Override
     public Variable visit(ReturnInstruction returnInstruction) {
-        return null;
+        if(this.table.parent == null){
+            this.errorList.add(
+                    new TSError(returnInstruction.line,
+                            returnInstruction.column,
+                            "Return solo puede ser usado dentro de una función.")
+            );
+            return null;
+        }
+        Variable value = new Variable();
+        value.line = returnInstruction.line;
+        value.column = returnInstruction.column;
+        if(returnInstruction.value != null){
+            value = (Variable) returnInstruction.value.accept(this);
+            if(value == null){
+                this.errorList.add(
+                        new TSError(returnInstruction.line,
+                                returnInstruction.column,
+                                "No se pudo realizar la operación.")
+                );
+                return null;
+            }
+            return value;
+        }
+
+        value.variableType = VariableType.VOID;
+        value.declarationType = DeclarationType.LET;
+        value.id = "void";
+
+        return value;
     }
 
     @Override
@@ -2085,18 +2290,18 @@ public class Runner extends Visitor{
 
         while (booleanOperation) {
 //            whileInstruction.instructions.forEach(instruction -> instruction.accept(this));
+            System.out.println("Iterando valores de while");
             for(Instruction instruction: whileInstruction.instructions){
                 if(instruction instanceof If ifIn){
                     Object object = ifIn.accept(this);
 
-                    if(object == null){
-                        continue;
-                    }
-
-                    if(object instanceof Break breakIn){
-                        return null;
-                    } else if(object instanceof Continue continueIn){
-                        break;
+                    if(object != null){
+                        if(object instanceof Break breakIn){
+                            return null;
+                        } else if(object instanceof Continue continueIn){
+                            System.out.println("Encontrando continue en if");
+                            break;
+                        }
                     }
 
                 } else if(instruction instanceof While whileIn){
@@ -2119,5 +2324,74 @@ public class Runner extends Visitor{
 
         this.table = this.table.parent;
         return null;
+    }
+
+    public List<Variable> getAllReturn(Function function){
+        List<Variable> resultList = new ArrayList<>();
+
+        getAllReturn(function.instructions, resultList);
+
+        return resultList;
+
+    }
+
+    public void getAllReturn(List<Instruction> instructions, List<Variable> resultList){
+        for(Instruction instruction: instructions){
+
+            if(instruction instanceof If anIf){
+                getAllReturn(anIf.trueBlock, resultList);
+                if(anIf.falseBlock != null){
+                    if(anIf.falseBlock instanceof Else anElse){
+                        getAllReturn(anElse.instructions, resultList);
+                    } else if(anIf.falseBlock instanceof If ifI) {
+                        getAllReturn(ifI.trueBlock, resultList);
+                    }
+                }
+            } else if(instruction instanceof Else elseI){
+                getAllReturn( elseI.instructions, resultList);
+            } else if(instruction instanceof For forI){
+                getAllReturn( forI.instructions, resultList);
+            } else if(instruction instanceof DoWhile doWhile){
+                getAllReturn( doWhile.instructions, resultList);
+            } else if(instruction instanceof While whileI){
+                getAllReturn( whileI.instructions, resultList);
+            } else if(instruction instanceof ReturnInstruction returnI){
+                Variable variable = returnI.accept(this);
+                resultList.add(variable);
+            } else if(!(instruction instanceof ConsoleLog)){
+                instruction.accept(this);
+            }
+        }
+    }
+
+    public boolean isFunEQ(Function newFun, Function funInTable){
+        if(newFun.parameters == null && funInTable.parameters == null){
+            return true;
+        }
+
+        if(newFun.parameters != null){
+            if(funInTable.parameters == null){
+                return false;
+            }
+
+            if(newFun.parameters.size() != funInTable.parameters.size()){
+                return false;
+            }
+
+            for(int i = 0; i < newFun.parameters.size(); i++){
+                Parameter p1 = (Parameter) newFun.parameters.get(i);
+                Parameter p2 = (Parameter) funInTable.parameters.get(i);
+
+                if(p1.variableType != p2.variableType){
+                    return false;
+                }
+
+            }
+
+            return true;
+        }
+
+        return false;
+
     }
 }
