@@ -1,9 +1,7 @@
 package com.mio.typeSecure.models.visitor;
 
 import com.mio.typeSecure.models.instructions.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.mio.typeSecure.models.symbolTable.SymbolTable;
 
 public abstract class Visitor {
 

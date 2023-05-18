@@ -5,7 +5,8 @@ import com.mio.typeSecure.compiler.parser.TSParser;
 import com.mio.typeSecure.models.helpers.ReportHelper;
 import com.mio.typeSecure.models.instructions.Instruction;
 import com.mio.typeSecure.models.TSError;
-import com.mio.typeSecure.models.instructions.SymbolTable;
+import com.mio.typeSecure.models.symbolTable.ScopeType;
+import com.mio.typeSecure.models.symbolTable.SymbolTable;
 import com.mio.typeSecure.models.visitor.Debugger;
 import com.mio.typeSecure.models.visitor.Runner;
 import com.mio.typeSecure.models.visitor.Visitor;
@@ -44,7 +45,7 @@ public class TSParserController {
         }
 
         //TODO: usar un visitor para verificar que todo el código funcione de la forma correcta
-        SymbolTable table = new SymbolTable();
+        SymbolTable table = new SymbolTable(ScopeType.GLOBAL_SCOPE);
         Visitor debugger = new Debugger(table, errors);
 
         instructions.forEach(instruction -> {
@@ -58,9 +59,14 @@ public class TSParserController {
 
 //        table.getVariableList().forEach(System.out::println);
         //TODO: usar un visitor para correr el programa.
-        SymbolTable runnerTable = new SymbolTable();
+        SymbolTable runnerTable = new SymbolTable(ScopeType.GLOBAL_SCOPE);
         Visitor runner = new Runner(runnerTable, out, errors);
-        instructions.forEach(instruction -> instruction.accept(runner));
+        try {
+
+            instructions.forEach(instruction -> instruction.accept(runner));
+        } catch (RuntimeException e){
+            return errors.stream().map(TSError::toString).toList();
+        }
 
         return out;
     }

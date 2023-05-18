@@ -28,7 +28,6 @@ public class For extends Instruction{
 
     @Override
     public Variable accept(Visitor visitor) {
-        visitor.visit(this);
-        return null;
+        return visitor.visit(this);
     }
 }

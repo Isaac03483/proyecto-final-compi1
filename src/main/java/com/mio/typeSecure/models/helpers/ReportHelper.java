@@ -1,7 +1,7 @@
 package com.mio.typeSecure.models.helpers;
 
 import com.mio.typeSecure.models.TSError;
-import com.mio.typeSecure.models.instructions.SymbolTable;
+import com.mio.typeSecure.models.symbolTable.SymbolTable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -122,7 +122,7 @@ public class ReportHelper {
                 content.append(TD_O).append(function.id).append(TD_C);
                 content.append(TD_O).append(TD_C);
                 content.append(TD_O).append(function.returnType).append(TD_C);
-                content.append(TD_O).append(function.parameters != null? function.parameters.size(): 0).append(TD_C);
+                content.append(TD_O).append(function.parametersInstr != null? function.parametersInstr.size(): 0).append(TD_C);
                 content.append(TR_C);
             });
 

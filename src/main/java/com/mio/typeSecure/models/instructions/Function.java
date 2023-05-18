@@ -1,17 +1,18 @@
 package com.mio.typeSecure.models.instructions;
 
+import com.mio.typeSecure.models.symbolTable.SymbolTable;
 import com.mio.typeSecure.models.visitor.Visitor;
 
 import java.util.List;
-import java.util.Objects;
 
 public class Function extends Instruction{
 
     public String id;
-    public List<Instruction> parameters;
+    public List<Instruction> parametersInstr;
     public List<Instruction> instructions;
     public ReturnType returnType;
-    public SymbolTable symbolTable;
+    public SymbolTable parentTable;
+    public List<Variable> parametersInFun;
 
     public Function(int line,
                     int column,
@@ -22,7 +23,7 @@ public class Function extends Instruction{
 
         super(line, column);
         this.id = id;
-        this.parameters = parameters;
+        this.parametersInstr = parameters;
         this.instructions = instructions;
         this.returnType = returnType;
     }
@@ -32,5 +33,16 @@ public class Function extends Instruction{
     public Variable accept(Visitor visitor) {
         visitor.visit(this);
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "Function{" +
+                "id='" + id + '\'' +
+                ", returnType=" + returnType +
+                ", parentTable=" + parentTable +
+                ", line=" + line +
+                ", column=" + column +
+                '}';
     }
 }

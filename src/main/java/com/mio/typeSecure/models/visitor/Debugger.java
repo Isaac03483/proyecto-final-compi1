@@ -1,11 +1,11 @@
 package com.mio.typeSecure.models.visitor;
 
 import com.mio.typeSecure.models.TSError;
-import com.mio.typeSecure.models.helpers.ReportHelper;
 import com.mio.typeSecure.models.instructions.*;
 import com.mio.typeSecure.models.helpers.OperationHelper;
+import com.mio.typeSecure.models.symbolTable.ScopeType;
+import com.mio.typeSecure.models.symbolTable.SymbolTable;
 
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -62,6 +62,18 @@ public class Debugger extends Visitor{
             return null;
         }
 
+        if(operation.variableType == VariableType.VOID){
+            this.errorList.add(
+                    new TSError(
+                            assignment.line,
+                            assignment.column,
+                            "La función no retorna ningún valor."
+                    )
+            );
+
+            return null;
+        }
+
         if(varInTable.variableType != operation.variableType){
             this.errorList.add(
                     new TSError(
@@ -87,7 +99,18 @@ public class Debugger extends Visitor{
                     new TSError(
                             binaryOperation.line,
                             binaryOperation.column,
-                            "No se pudo realizar la operación"
+                            "No se pudo realizar la operación."
+                    )
+            );
+            return null;
+        }
+
+        if(left.variableType == VariableType.VOID || right.variableType == VariableType.VOID){
+            this.errorList.add(
+                    new TSError(
+                            binaryOperation.line,
+                            binaryOperation.column,
+                            "No se pudo realizar la operación."
                     )
             );
             return null;
@@ -187,6 +210,7 @@ public class Debugger extends Visitor{
 
             case TIMES -> {
 
+                System.out.println("left: "+left.variableType+" right: "+right.variableType);
                 if(left.variableType != right.variableType){
                     this.errorList.add(
                             new TSError(
@@ -591,7 +615,9 @@ public class Debugger extends Visitor{
 
     @Override
     public Instruction visit(Break breakInstruction) {
-        if(this.table.parent == null){
+        System.out.println("analizando break debug "+this.table.scopeType);
+        if(!this.table.isInLoopScope()){
+            System.out.println("no encuentra scope loop");
             this.errorList.add(
                     new TSError(breakInstruction.line,
                             breakInstruction.column,
@@ -809,11 +835,96 @@ public class Debugger extends Visitor{
             }
 
             case "printAst" -> {
-
+                System.out.println("debug printAST");
             }
 
             default -> {
+                List<Variable> parameters = new ArrayList<>();
 
+                if(callFunction.instructions != null){
+                    parameters = callFunction.instructions.stream()
+                            .map(instruction -> instruction.accept(this)).map(parameter -> {
+                                if(parameter == null){
+                                    this.errorList.add(
+                                            new TSError(callFunction.line,
+                                                    callFunction.column,
+                                                    "No se pudo realizar la operación.")
+                                    );
+                                    return null;
+                                }
+                                return (Variable) parameter;
+                            }).filter(Objects::nonNull).toList();
+                }
+
+                List<Function> functions = this.table.findFunById(callFunction.id);
+                if(functions.isEmpty()){
+                    this.errorList.add(
+                            new TSError(callFunction.line,
+                                    callFunction.column,
+                                    "No se encontró la función")
+                    );
+                    return null;
+                }
+
+                Function fun = getFun(functions, callFunction.id, parameters);
+
+                if(fun == null){
+                    this.errorList.add(
+                            new TSError(callFunction.line,
+                                    callFunction.column,
+                                    "No se encontró la función")
+                    );
+                    return null;
+                }
+
+                SymbolTable originalTable = this.table;
+                this.table = new SymbolTable(ScopeType.FUN_SCOPE,fun.parentTable);
+                Variable  returnVar = new Variable();
+                if(fun.parametersInstr != null){
+                    for(int i = 0; i < fun.parametersInstr.size(); i++){
+                        Variable paramVar = (Variable) fun.parametersInstr.get(i).accept(this);
+                        if(paramVar != null){
+                            paramVar.value = parameters.get(i).value;
+                        }
+                    }
+                }
+
+                for(Instruction funIn: fun.instructions){
+                    Object obj = funIn.accept(this);
+                    if(obj instanceof Variable variable){
+                        System.out.println(variable.value);
+                    }
+                }
+
+                switch (fun.returnType){
+                    case NUMBER -> {
+                        returnVar.value = "1";
+                        returnVar.variableType = VariableType.NUMBER;
+                    }
+
+                    case BIG_INT -> {
+                        returnVar.value = "1n";
+                        returnVar.variableType = VariableType.BIG_INT;
+                    }
+
+                    case STRING -> {
+                        returnVar.value = "1";
+                        returnVar.variableType = VariableType.STRING;
+                    }
+
+                    case BOOLEAN -> {
+                        returnVar.value = "true";
+                        returnVar.variableType = VariableType.BOOLEAN;
+                    }
+
+                    case VOID -> {
+                        returnVar.value = "void";
+                        returnVar.variableType = VariableType.VOID;
+                    }
+                }
+
+                this.table = originalTable;
+                return returnVar;
             }
         }
         return null;
@@ -831,6 +942,17 @@ public class Debugger extends Visitor{
                                 "No se pudo realizar la Instrucción."
                         )
                 );
+                return;
+            }
+
+            if(result.variableType == VariableType.VOID){
+                this.errorList.add(
+                        new TSError(
+                                consoleLog.line,
+                                consoleLog.column,
+                                "La operación no retorna ningún valor."
+                        )
+                );
             }
 
         });
@@ -839,7 +961,7 @@ public class Debugger extends Visitor{
 
     @Override
     public Instruction visit(Continue continueInstruction) {
-        if(this.table.parent == null){
+        if(!this.table.isInLoopScope()){
             this.errorList.add(
                     new TSError(continueInstruction.line,
                             continueInstruction.column,
@@ -896,7 +1018,8 @@ public class Debugger extends Visitor{
     @Override
     public Variable visit(DoWhile doWhile) {
 
-        this.table = new SymbolTable(this.table);
+        this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
+        System.out.println("CREANDO SCOPE DE DO WHILE");
         Variable operation = (Variable) doWhile.operation.accept(this);
 
         if(operation == null){
@@ -957,7 +1080,8 @@ public class Debugger extends Visitor{
     @Override
     public Variable visit(For forInstruction) {
 
-        this.table = new SymbolTable(this.table);
+        this.table = new SymbolTable(ScopeType.LOOP_SCOPE,this.table);
+        System.out.println("CREANDO SCOPE PARA FOR");
         forInstruction.assignmentBlock.accept(this);
 
         Variable operation = (Variable) forInstruction.operationBlock.accept(this);
@@ -984,29 +1108,6 @@ public class Debugger extends Visitor{
         forInstruction.instructions.forEach(instruction -> instruction.accept(this));
         forInstruction.incrementBlock.accept(this);
 
-        /*
-        for(Instruction instruction: forInstruction.instructions){
-            if(instruction instanceof ReturnInstruction){
-                return ((ReturnInstruction) instruction).accept(this);
-            } else if(instruction instanceof Break){
-                System.out.println("Encontrando un break.");
-            } else if(instruction instanceof Continue){
-                System.out.println("Encontrando un continue.");
-            } else if(instruction instanceof If){
-                Object result = instruction.accept(this);
-                if(result instanceof Variable){
-                    this.table = table.parent;
-                    return (Variable) result;
-                } else if(result instanceof Break){
-                    System.out.println("Recibiendo break de if.");
-                    this.table = table.parent;
-                } else if (result instanceof Continue) {
-                    System.out.println("Recibiendo continue de if.");
-                    this.table = table.parent;
-                }
-            }
-        }
-        */
 
 
         this.table = this.table.parent;
@@ -1033,11 +1134,14 @@ public class Debugger extends Visitor{
             }
         }
 
-        this.table = new SymbolTable(this.table);
+        this.table = new SymbolTable(ScopeType.FUN_SCOPE, this.table);
+        System.out.println("CREANDO SCOPE PARA FUNCIONES");
 
-        function.symbolTable = this.table;
-        if(function.parameters != null){
-            for(Instruction parameter: function.parameters){
+        function.parentTable = this.table.parent.clone();
+
+        List<Variable> parameters = new ArrayList<>();
+        if(function.parametersInstr != null){
+            for(Instruction parameter: function.parametersInstr){
                 Variable result = (Variable) parameter.accept(this);
                 if(result == null){
                     this.errorList.add(
@@ -1047,10 +1151,17 @@ public class Debugger extends Visitor{
                     );
                     return;
                 }
+                parameters.add(result);
             }
         }
-
+        function.parametersInFun = parameters;
         List<Variable> variables = getAllReturn(function);
+
+        function.instructions.forEach(instruction -> {
+            if(!(instruction instanceof Declaration)){
+                instruction.accept(this);
+            }
+        });
 
         if(variables.isEmpty()){
 
@@ -1070,7 +1181,9 @@ public class Debugger extends Visitor{
                 return;
             }
         } else {
+            variables.forEach(System.out::println);
             Variable firstReturn = variables.get(0);
+            System.out.println(firstReturn);
             boolean hasDifferentType = variables.stream().anyMatch(var -> var != null && var.variableType != firstReturn.variableType);
             if(hasDifferentType){
                 this.errorList.add(
@@ -1134,44 +1247,13 @@ public class Debugger extends Visitor{
             return null;
         }
 
-        this.table = new SymbolTable(this.table);
+        this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
         ifInstruction.trueBlock.forEach(instruction -> instruction.accept(this));
-        /*
-        for(Instruction instruction: ifInstruction.trueBlock){
-            if(instruction instanceof ReturnInstruction){
-                this.table = this.table.parent;
-                return instruction.accept(this);
-            } else if( instruction instanceof Break){
-                this.table = this.table.parent;
-                System.out.println("Encontrando un break en if.");
-                return instruction.accept(this);
-            } else if( instruction instanceof Continue){
-                this.table = this.table.parent;
-                System.out.println("Encontrando un continue en if.");
-                return instruction.accept(this);
-            }
-
-            instruction.accept(this);
-        }*/
         this.table = this.table.parent;
         if(ifInstruction.falseBlock != null){
-            this.table = new SymbolTable(this.table);
+            this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
 
             ifInstruction.falseBlock.accept(this);
-            /*
-            Object result = ifInstruction.falseBlock.accept(this);
-            if(result instanceof Variable){
-                this.table = table.parent;
-                return result;
-            } else if(result instanceof Break){
-                System.out.println("Recibiendo break de else.");
-                this.table = table.parent;
-                return result;
-            } else if (result instanceof Continue) {
-                System.out.println("Recibiendo continue de else.");
-                this.table = table.parent;
-                return result;
-            }*/
 
             this.table = table.parent;
 
@@ -1768,7 +1850,7 @@ public class Debugger extends Visitor{
     }
     @Override
     public Variable visit(ReturnInstruction returnInstruction) {
-        if(this.table.parent == null){
+        if(!this.table.isInFunScope()){
             this.errorList.add(
               new TSError(returnInstruction.line,
                       returnInstruction.column,
@@ -1780,7 +1862,7 @@ public class Debugger extends Visitor{
         value.line = returnInstruction.line;
         value.column = returnInstruction.column;
         if(returnInstruction.value != null){
-             value = (Variable) returnInstruction.value.accept(this);
+            value = (Variable) returnInstruction.value.accept(this);
             if(value == null){
                 this.errorList.add(
                         new TSError(returnInstruction.line,
@@ -2116,6 +2198,17 @@ public class Debugger extends Visitor{
             result.variableType = operation.variableType;
         }
 
+        if(operation.variableType == VariableType.VOID){
+            this.errorList.add(
+                    new TSError(
+                            variableDeclaration.line,
+                            variableDeclaration.column,
+                            "La función no retorna ningún valor."
+                    )
+            );
+            return null;
+        }
+
         if(variableDeclaration.variableType != null && operation.variableType != result.variableType){
             this.errorList.add(
                     new TSError(
@@ -2157,7 +2250,8 @@ public class Debugger extends Visitor{
             return null;
         }
 
-        this.table = new SymbolTable(this.table);
+        this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
+        System.out.println("CREANDO SCOPE PARA WHILE");
         whileInstruction.instructions.forEach(instruction -> instruction.accept(this));
         this.table = this.table.parent;
         return null;
@@ -2174,7 +2268,6 @@ public class Debugger extends Visitor{
 
     public void getAllReturn(List<Instruction> instructions, List<Variable> resultList){
         for(Instruction instruction: instructions){
-
             if(instruction instanceof If anIf){
                 getAllReturn(anIf.trueBlock, resultList);
                 if(anIf.falseBlock != null){
@@ -2188,36 +2281,44 @@ public class Debugger extends Visitor{
                 getAllReturn( elseI.instructions, resultList);
             } else if(instruction instanceof For forI){
                 getAllReturn( forI.instructions, resultList);
+
             } else if(instruction instanceof DoWhile doWhile){
+
                 getAllReturn( doWhile.instructions, resultList);
+
             } else if(instruction instanceof While whileI){
+
                 getAllReturn( whileI.instructions, resultList);
-            } else if(instruction instanceof ReturnInstruction returnI){
+            } else if(instruction instanceof ReturnInstruction returnI) {
                 Variable variable = returnI.accept(this);
-                resultList.add(variable);
-            } else if(!(instruction instanceof ConsoleLog)){
+                if (variable != null) {
+                    resultList.add(variable);
+                }
+            } else if(instruction instanceof Declaration){
+                instruction.accept(this);
+            } else if(instruction instanceof Assignment){
                 instruction.accept(this);
             }
         }
     }
 
     public boolean isFunEQ(Function newFun, Function funInTable){
-        if(newFun.parameters == null && funInTable.parameters == null){
+        if(newFun.parametersInstr == null && funInTable.parametersInstr == null){
             return true;
         }
 
-        if(newFun.parameters != null){
-            if(funInTable.parameters == null){
+        if(newFun.parametersInstr != null){
+            if(funInTable.parametersInstr == null){
                 return false;
             }
 
-            if(newFun.parameters.size() != funInTable.parameters.size()){
+            if(newFun.parametersInstr.size() != funInTable.parametersInstr.size()){
                 return false;
             }
 
-            for(int i = 0; i < newFun.parameters.size(); i++){
-                Parameter p1 = (Parameter) newFun.parameters.get(i);
-                Parameter p2 = (Parameter) funInTable.parameters.get(i);
+            for(int i = 0; i < newFun.parametersInstr.size(); i++){
+                Parameter p1 = (Parameter) newFun.parametersInstr.get(i);
+                Parameter p2 = (Parameter) funInTable.parametersInstr.get(i);
 
                 if(p1.variableType != p2.variableType){
                     return false;
@@ -2230,6 +2331,31 @@ public class Debugger extends Visitor{
 
         return false;
 
+    }
+
+    public Function getFun(List<Function> functions, String id, List<Variable> parameters){
+        List<Function> functionsWithParams = functions.stream()
+                .filter(function -> function.parametersInFun.size() == parameters.size()).toList();
+
+        if(functionsWithParams.isEmpty()){
+            return null;
+        }
+
+        for(Function function: functionsWithParams){
+
+            boolean isFun = true;
+            for(int i = 0; i < parameters.size(); i++){
+                if(function.parametersInFun.get(i).variableType != parameters.get(i).variableType){
+                    isFun = false;
+                }
+            }
+
+            if(isFun){
+                return function;
+            }
+        }
+
+        return null;
     }
 
 }
