@@ -127,11 +127,11 @@ public class TSLexer implements java_cup.runtime.Scanner {
     "\1\71\10\24\1\0\1\72\1\0\1\73\1\74\1\0"+
     "\1\75\1\0\1\76\1\0\1\77\1\0\1\100\1\101"+
     "\1\24\1\102\3\24\1\0\1\103\2\0\1\104\1\0"+
-    "\3\24\1\105\1\106\1\107\2\0\3\24\1\0\1\110"+
-    "\1\24\1\111\1\112\1\0\1\24\1\113\1\24\1\114";
+    "\3\24\1\105\1\106\1\107\2\0\3\24\1\110\1\111"+
+    "\1\24\1\112\1\113\2\24\1\114";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[271];
+    int [] result = new int[269];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -188,11 +188,11 @@ public class TSLexer implements java_cup.runtime.Scanner {
     "\0\u2f8c\0\104\0\u2fd0\0\104\0\u3014\0\u0440\0\u0440\0\u3058"+
     "\0\u0440\0\u309c\0\u30e0\0\u3124\0\u3168\0\104\0\u31ac\0\u31f0"+
     "\0\104\0\u3234\0\u3278\0\u32bc\0\u3300\0\u0440\0\104\0\104"+
-    "\0\u3344\0\u3388\0\u33cc\0\u3410\0\u3454\0\u3498\0\104\0\u34dc"+
-    "\0\u0440\0\u0440\0\u3520\0\u3564\0\104\0\u35a8\0\u0440";
+    "\0\u3344\0\u3388\0\u33cc\0\u3410\0\u3454\0\104\0\104\0\u3498"+
+    "\0\u0440\0\u0440\0\u34dc\0\u3520\0\u0440";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[271];
+    int [] result = new int[269];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -349,13 +349,12 @@ public class TSLexer implements java_cup.runtime.Scanner {
     "\6\32\25\0\3\32\5\0\40\32\1\u0105\6\32\67\0"+
     "\1\u0106\76\0\1\u0107\46\0\3\32\5\0\17\32\1\u0108"+
     "\27\32\25\0\3\32\5\0\23\32\1\u0109\23\32\25\0"+
-    "\3\32\5\0\23\32\1\u010a\23\32\15\0\1\u010b\113\0"+
-    "\3\32\5\0\20\32\1\u010c\26\32\16\0\1\u010d\112\0"+
-    "\3\32\5\0\31\32\1\u010e\15\32\25\0\3\32\5\0"+
-    "\23\32\1\u010f\23\32\3\0";
+    "\3\32\5\0\23\32\1\u010a\23\32\25\0\3\32\5\0"+
+    "\20\32\1\u010b\26\32\25\0\3\32\5\0\31\32\1\u010c"+
+    "\15\32\25\0\3\32\5\0\23\32\1\u010d\23\32\3\0";
 
   private static int [] zzUnpacktrans() {
-    int [] result = new int[13804];
+    int [] result = new int[13668];
     int offset = 0;
     offset = zzUnpacktrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -404,11 +403,11 @@ public class TSLexer implements java_cup.runtime.Scanner {
     "\1\0\71\1\1\0\30\1\1\11\12\0\23\1\1\11"+
     "\13\0\11\1\1\0\1\11\1\0\2\11\1\0\1\11"+
     "\1\0\1\11\1\0\1\11\1\0\7\1\1\0\1\11"+
-    "\2\0\1\11\1\0\4\1\2\11\2\0\3\1\1\0"+
-    "\1\11\3\1\1\0\1\1\1\11\2\1";
+    "\2\0\1\11\1\0\4\1\2\11\2\0\3\1\2\11"+
+    "\6\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[271];
+    int [] result = new int[269];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -1278,22 +1277,22 @@ public class TSLexer implements java_cup.runtime.Scanner {
           // fall through
           case 147: break;
           case 72:
-            { return symbolWithoutValue(CONSOLE_LOG);
+            { return symbolWithoutValue(RANDOM);
             }
           // fall through
           case 148: break;
           case 73:
-            { return symbolWithoutValue(LOWER);
+            { return symbolWithoutValue(CONSOLE_LOG);
             }
           // fall through
           case 149: break;
           case 74:
-            { return symbolWithoutValue(UPPER);
+            { return symbolWithoutValue(LOWER);
             }
           // fall through
           case 150: break;
           case 75:
-            { return symbolWithoutValue(RANDOM);
+            { return symbolWithoutValue(UPPER);
             }
           // fall through
           case 151: break;

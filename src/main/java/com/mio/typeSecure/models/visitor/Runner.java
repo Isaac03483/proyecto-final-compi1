@@ -1190,6 +1190,7 @@ public class Runner extends Visitor{
     @Override
     public Object visit(Else elseInstruction) {
 
+        this.table = new SymbolTable(ScopeType.ELSE_SCOPE, this.table);
         for(Instruction instruction: elseInstruction.instructions){
             if(instruction instanceof If ifIn){
                 Object object = ifIn.accept(this);
@@ -1265,12 +1266,14 @@ public class Runner extends Visitor{
             } else if (instruction instanceof ReturnInstruction returnIn){
                 Variable variable = returnIn.accept(this);
                 if(variable != null){
+                    this.table = this.table.parent;
                     return variable;
                 }
             }else {
                 instruction.accept(this);
             }
         }
+        this.table = this.table.parent;
         return null;
     }
 
@@ -1649,7 +1652,7 @@ public class Runner extends Visitor{
         }
         if(ifInstruction.falseBlock != null){
 
-            this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
+//            this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
             Object object = ifInstruction.falseBlock.accept(this);
 
             if(object instanceof Break breakIn){
@@ -1666,10 +1669,10 @@ public class Runner extends Visitor{
                     return null;
                 }
 
-                this.table = this.table.parent;
+//                this.table = this.table.parent;
                 return variable;
             }
-            this.table = this.table.parent;
+//            this.table = this.table.parent;
             return null;
         }
 

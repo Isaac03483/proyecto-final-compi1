@@ -2295,7 +2295,6 @@ public class Debugger extends Visitor{
                 getAllReturn( elseI.instructions, resultList);
             } else if(instruction instanceof For forI){
                 getAllReturn( forI.instructions, resultList);
-
             } else if(instruction instanceof DoWhile doWhile){
 
                 getAllReturn( doWhile.instructions, resultList);
@@ -2309,8 +2308,6 @@ public class Debugger extends Visitor{
                     resultList.add(variable);
                 }
             } else if(instruction instanceof Declaration){
-                instruction.accept(this);
-            } else if(instruction instanceof Assignment){
                 instruction.accept(this);
             }
         }

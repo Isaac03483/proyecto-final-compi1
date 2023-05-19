@@ -282,14 +282,14 @@ public class OperationHelper {
 
                 double leftNumber = Double.parseDouble(left);
                 double rightNumber = Double.parseDouble(right);
-                boolean resultValue = leftNumber >= rightNumber;
+                boolean resultValue = leftNumber != rightNumber;
                 result.value = String.valueOf(resultValue);
 
             }
             case BIG_INT -> {
                 int leftNumber = getIntBigPart(left);
                 int rightNumber = getIntBigPart(right);
-                boolean resultValue = leftNumber >= rightNumber;
+                boolean resultValue = leftNumber != rightNumber;
                 result.value = String.valueOf(resultValue);
             }
             default -> {
