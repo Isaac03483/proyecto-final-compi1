@@ -1507,13 +1507,15 @@ public class Runner extends Visitor{
                 return;
             }
 
-            if(!(function.instructions.get(function.instructions.size()-1) instanceof ReturnInstruction)){
-                this.errorList.add(
-                        new TSError(function.line,
-                                function.column,
-                                "Se esperaba un valor de retorno al final de la función.")
-                );
-                return;
+            if(function.returnType != ReturnType.VOID){
+                if(!(function.instructions.get(function.instructions.size()-1) instanceof ReturnInstruction)){
+                    this.errorList.add(
+                            new TSError(function.line,
+                                    function.column,
+                                    "Se esperaba un valor de retorno al final de la función.")
+                    );
+                    return;
+                }
             }
 
         }

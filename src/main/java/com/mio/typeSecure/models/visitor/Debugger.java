@@ -1202,6 +1202,18 @@ public class Debugger extends Visitor{
                     case BOOLEAN -> function.returnType = ReturnType.BOOLEAN;
                     case VOID -> function.returnType = ReturnType.VOID;
                 }
+
+                if(function.returnType != ReturnType.VOID){
+                    if(!(function.instructions.get(function.instructions.size()-1) instanceof ReturnInstruction)){
+                        this.errorList.add(
+                                new TSError(function.line,
+                                        function.column,
+                                        "Se esperaba un valor de retorno al final de la función.")
+                        );
+                        return;
+                    }
+                }
+
                 this.table = table.parent;
                 this.table.addFunction(function);
                 return;
@@ -1216,13 +1228,15 @@ public class Debugger extends Visitor{
                 return;
             }
 
-            if(!(function.instructions.get(function.instructions.size()-1) instanceof ReturnInstruction)){
-                this.errorList.add(
-                        new TSError(function.line,
-                                function.column,
-                                "Se esperaba un valor de retorno al final de la función.")
-                );
-                return;
+            if(function.returnType != ReturnType.VOID){
+                if(!(function.instructions.get(function.instructions.size()-1) instanceof ReturnInstruction)){
+                    this.errorList.add(
+                            new TSError(function.line,
+                                    function.column,
+                                    "Se esperaba un valor de retorno al final de la función.")
+                    );
+                    return;
+                }
             }
         }
 

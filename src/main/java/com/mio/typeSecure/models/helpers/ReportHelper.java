@@ -13,7 +13,7 @@ public class ReportHelper {
     public static final String TABLE_REPORT_NAME = "table.html";
     public static final String ERROR_REPORT_NAME = "error.html";
     public static final String HTML_O = "<html>\n";
-    public static final String HEAD = "\t<head>\n\t\t<meta charset=\"UTF-8\">\n\t</head>";
+    public static final String HEAD = "\t<head>\n\t\t<meta charset=\"UTF-8\">\n\t</head>\n";
     public static final String HTML_C = "</html>\n";
     public static final String BODY_O = "\t<body>\n";
     public static final String BODY_C = "\t</body>\n";
