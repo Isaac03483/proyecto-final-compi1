@@ -59,6 +59,7 @@ public class TSParserController {
 
 //        table.getVariableList().forEach(System.out::println);
         //TODO: usar un visitor para correr el programa.
+        System.out.println("EJECUTANDO PROGRAMA");
         SymbolTable runnerTable = new SymbolTable(ScopeType.GLOBAL_SCOPE);
         Visitor runner = new Runner(runnerTable, out, errors);
         try {

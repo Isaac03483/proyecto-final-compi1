@@ -1039,8 +1039,6 @@ public class Runner extends Visitor{
 
     @Override
     public Variable visit(DoWhile doWhile) {
-        this.table = new SymbolTable(ScopeType.LOOP_SCOPE,this.table);
-
         Variable operation = (Variable) doWhile.operation.accept(this);
 
         if(operation == null){
@@ -1064,12 +1062,14 @@ public class Runner extends Visitor{
             );
             return null;
         }
+        this.table = new SymbolTable(ScopeType.LOOP_SCOPE,this.table);
 
         doWhile.instructions.forEach(instruction -> instruction.accept(this));
         boolean booleanOperation = Boolean.parseBoolean(operation.value);
 
         while(booleanOperation){
 //            doWhile.instructions.forEach(instruction -> instruction.accept(this));
+
 
             for(Instruction instruction: doWhile.instructions){
                 if(instruction instanceof If ifIn){
@@ -1308,19 +1308,21 @@ public class Runner extends Visitor{
         while (booleanOperation){
 
 //            forInstruction.instructions.forEach(instruction -> instruction.accept(this));
+            this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
             for(Instruction instruction: forInstruction.instructions){
                 if(instruction instanceof If ifIn){
                     Object object = ifIn.accept(this);
 
                     if(object != null){
                         if(object instanceof Break breakIn){
+                            this.table = this.table.parent;
                             return null;
                         } else if(object instanceof Continue continueIn){
                             System.out.println("Encontrando continue en if");
                             break;
                         } else if(object instanceof Variable variable){
                             System.out.println("RECIBIENDO VARIABLE DE IF");
-                            if(this.table.parent == null){
+                            if(!this.table.isInFunScope()){
                                 System.out.println("su padre es null.");
                                 this.errorList.add(
                                         new TSError(forInstruction.line,
@@ -1331,14 +1333,14 @@ public class Runner extends Visitor{
                             }
 
                             System.out.println(variable);
-                            this.table = this.table.parent;
+                            this.table = this.table.parent.parent;
                             return variable;
                         }
                     }
 
                 } else if(instruction instanceof For forIn){
                     Variable variable = forIn.accept(this);
-                    if(this.table.parent == null){
+                    if(!this.table.isInFunScope()){
                         this.errorList.add(
                                 new TSError(forInstruction.line,
                                         forInstruction.column,
@@ -1348,7 +1350,7 @@ public class Runner extends Visitor{
                     }
 
                     if(variable != null){
-                        this.table = this.table.parent;
+                        this.table = this.table.parent.parent;
                         return variable;
                     }
 
@@ -1365,7 +1367,7 @@ public class Runner extends Visitor{
                     }
 
                     if(variable != null){
-                        this.table = this.table.parent;
+                        this.table = this.table.parent.parent;
                         return variable;
                     }
                 } else if(instruction instanceof DoWhile doWhileIn){
@@ -1381,7 +1383,7 @@ public class Runner extends Visitor{
                     }
 
                     if(variable != null){
-                        this.table = this.table.parent;
+                        this.table = this.table.parent.parent;
                         return variable;
                     }
                 }else if(instruction instanceof Break breakIn){
@@ -1403,7 +1405,7 @@ public class Runner extends Visitor{
                     }
 
                     if(variable != null){
-                        this.table = this.table.parent;
+                        this.table = this.table.parent.parent;
                         return variable;
                     }
 
@@ -1415,6 +1417,7 @@ public class Runner extends Visitor{
             forInstruction.incrementBlock.accept(this);
             operation = (Variable) forInstruction.operationBlock.accept(this);
             booleanOperation = Boolean.parseBoolean(operation.value);
+            this.table = this.table.parent;
 
         }
 
@@ -2664,10 +2667,11 @@ public class Runner extends Visitor{
             return null;
         }
 
-        this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
         boolean booleanOperation = Boolean.parseBoolean(operation.value);
 
         while (booleanOperation) {
+            this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
+
 //            whileInstruction.instructions.forEach(instruction -> instruction.accept(this));
             System.out.println("Iterando valores de while");
             for(Instruction instruction: whileInstruction.instructions){
@@ -2773,9 +2777,10 @@ public class Runner extends Visitor{
 
             operation = (Variable) whileInstruction.operation.accept(this);
             booleanOperation = Boolean.parseBoolean(operation.value);
+            this.table = this.table.parent;
+
         }
 
-        this.table = this.table.parent;
         return null;
     }
 
@@ -2790,33 +2795,51 @@ public class Runner extends Visitor{
 
     public void getAllReturn(List<Instruction> instructions, List<Variable> resultList){
         for(Instruction instruction: instructions){
-
             if(instruction instanceof If anIf){
+                this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
                 getAllReturn(anIf.trueBlock, resultList);
                 if(anIf.falseBlock != null){
                     if(anIf.falseBlock instanceof Else anElse){
+                        this.table = new SymbolTable(ScopeType.ELSE_SCOPE, this.table);
                         getAllReturn(anElse.instructions, resultList);
+                        this.table = this.table.parent;
                     } else if(anIf.falseBlock instanceof If ifI) {
+                        this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
                         getAllReturn(ifI.trueBlock, resultList);
+                        this.table = this.table.parent;;
                     }
                 }
+                this.table = this.table.parent;
             } else if(instruction instanceof Else elseI){
-                getAllReturn( elseI.instructions, resultList);
+                this.table = new SymbolTable(ScopeType.ELSE_SCOPE, this.table);
+                getAllReturn(elseI.instructions, resultList);
+                this.table = this.table.parent;
             } else if(instruction instanceof For forI){
+                this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
                 getAllReturn( forI.instructions, resultList);
-
+                this.table = this.table.parent;
             } else if(instruction instanceof DoWhile doWhile){
+                this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
+
                 getAllReturn( doWhile.instructions, resultList);
+                this.table = this.table.parent;
 
             } else if(instruction instanceof While whileI){
+                this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
+
                 getAllReturn( whileI.instructions, resultList);
-            } else if(instruction instanceof ReturnInstruction returnI){
+                this.table = this.table.parent;
+
+            } else if(instruction instanceof ReturnInstruction returnI) {
                 Variable variable = returnI.accept(this);
-                if(variable != null){
+                if (variable != null) {
                     resultList.add(variable);
                 }
+            } else if(instruction instanceof Declaration){
+                instruction.accept(this);
             }
         }
+
     }
 
     public boolean isFunEQ(Function newFun, Function funInTable){

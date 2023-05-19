@@ -1081,7 +1081,6 @@ public class Debugger extends Visitor{
     public Variable visit(For forInstruction) {
 
         this.table = new SymbolTable(ScopeType.LOOP_SCOPE,this.table);
-        System.out.println("CREANDO SCOPE PARA FOR");
         forInstruction.assignmentBlock.accept(this);
 
         Variable operation = (Variable) forInstruction.operationBlock.accept(this);
@@ -1105,10 +1104,10 @@ public class Debugger extends Visitor{
         }
 
 
+        this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
         forInstruction.instructions.forEach(instruction -> instruction.accept(this));
+        this.table = this.table.parent;
         forInstruction.incrementBlock.accept(this);
-
-
 
         this.table = this.table.parent;
         return null;
@@ -1155,13 +1154,12 @@ public class Debugger extends Visitor{
             }
         }
         function.parametersInFun = parameters;
+        this.table = new SymbolTable(ScopeType.FUN_SCOPE, this.table);
         List<Variable> variables = getAllReturn(function);
+        this.table = this.table.parent;
 
-        function.instructions.forEach(instruction -> {
-            if(!(instruction instanceof Declaration)){
-                instruction.accept(this);
-            }
-        });
+        System.out.println("ITERANDO INSTRUCCIONES FUNCION DEBUG");
+        function.instructions.forEach(instruction -> instruction.accept(this));
 
         if(variables.isEmpty()){
 
@@ -2283,25 +2281,40 @@ public class Debugger extends Visitor{
     public void getAllReturn(List<Instruction> instructions, List<Variable> resultList){
         for(Instruction instruction: instructions){
             if(instruction instanceof If anIf){
+                this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
                 getAllReturn(anIf.trueBlock, resultList);
                 if(anIf.falseBlock != null){
                     if(anIf.falseBlock instanceof Else anElse){
+                        this.table = new SymbolTable(ScopeType.ELSE_SCOPE, this.table);
                         getAllReturn(anElse.instructions, resultList);
+                        this.table = this.table.parent;
                     } else if(anIf.falseBlock instanceof If ifI) {
+                        this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
                         getAllReturn(ifI.trueBlock, resultList);
+                        this.table = this.table.parent;;
                     }
                 }
+                this.table = this.table.parent;
             } else if(instruction instanceof Else elseI){
-                getAllReturn( elseI.instructions, resultList);
+                this.table = new SymbolTable(ScopeType.ELSE_SCOPE, this.table);
+                getAllReturn(elseI.instructions, resultList);
+                this.table = this.table.parent;
             } else if(instruction instanceof For forI){
+                this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
                 getAllReturn( forI.instructions, resultList);
+                this.table = this.table.parent;
             } else if(instruction instanceof DoWhile doWhile){
+                this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
 
                 getAllReturn( doWhile.instructions, resultList);
+                this.table = this.table.parent;
 
             } else if(instruction instanceof While whileI){
+                this.table = new SymbolTable(ScopeType.LOOP_SCOPE, this.table);
 
                 getAllReturn( whileI.instructions, resultList);
+                this.table = this.table.parent;
+
             } else if(instruction instanceof ReturnInstruction returnI) {
                 Variable variable = returnI.accept(this);
                 if (variable != null) {
