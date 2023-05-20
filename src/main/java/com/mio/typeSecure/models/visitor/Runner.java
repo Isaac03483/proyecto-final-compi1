@@ -1546,6 +1546,17 @@ public class Runner extends Visitor{
             return null;
         }
 
+        if(operation.variableType != VariableType.BOOLEAN){
+            this.errorList.add(
+                    new TSError(
+                            ifInstruction.line,
+                            ifInstruction.column,
+                            "La operación debe ser tipo BOOLEAN."
+                    )
+            );
+            return null;
+        }
+
         if(operation.value.equals("true")){
             this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
 

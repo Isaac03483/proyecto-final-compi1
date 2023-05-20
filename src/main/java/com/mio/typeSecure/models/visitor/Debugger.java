@@ -1259,6 +1259,16 @@ public class Debugger extends Visitor{
             return null;
         }
 
+        if(operation.variableType != VariableType.BOOLEAN){
+            this.errorList.add(
+                    new TSError(
+                            ifInstruction.line,
+                            ifInstruction.column,
+                            "La operación debe ser tipo BOOLEAN."
+                    )
+            );
+        }
+
         this.table = new SymbolTable(ScopeType.IF_SCOPE, this.table);
         ifInstruction.trueBlock.forEach(instruction -> instruction.accept(this));
         this.table = this.table.parent;
