@@ -66,7 +66,11 @@ public class MainController {
             fileDialog.setVisible(true);
             fileDialog.dispose();
             if(fileDialog.getFile() != null && fileDialog.getDirectory() != null){
-                FileWriter writer = new FileWriter(fileDialog.getDirectory()+fileDialog.getFile()+".ts");
+                StringBuilder fileName = new StringBuilder(fileDialog.getFile());
+                if(!fileName.toString().contains(".ts")){
+                    fileName.append(".ts");
+                }
+                FileWriter writer = new FileWriter(fileDialog.getDirectory()+ fileName);
                 writer.write(content);
                 writer.close();
                 return true;
