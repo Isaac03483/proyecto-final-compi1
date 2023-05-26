@@ -1938,6 +1938,11 @@ public class Debugger extends Visitor{
                         );
                         return null;
                     }
+
+                    double indexValue = Double.parseDouble(indexVar.value);
+
+                    indexVar.value = indexValue % 1 == 0 ? String.valueOf((int)indexValue): indexVar.value;
+
                     int index = Integer.parseInt(indexVar.value);
                     result.variableType = VariableType.STRING;
                     result.value = String.valueOf(value.value.charAt(index));
@@ -1947,6 +1952,13 @@ public class Debugger extends Visitor{
                             new TSError(stringInstruction.line,
                                     stringInstruction.column,
                                     "Indice fuera del tamaño de la variable.")
+                    );
+                    return null;
+                } catch (NumberFormatException e){
+                    this.errorList.add(
+                            new TSError(stringInstruction.line,
+                                    stringInstruction.column,
+                                    "Se esperaba un valor entero.")
                     );
                     return null;
                 }

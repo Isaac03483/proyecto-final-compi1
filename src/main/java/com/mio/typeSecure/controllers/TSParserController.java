@@ -66,6 +66,7 @@ public class TSParserController {
 
             instructions.forEach(instruction -> instruction.accept(runner));
         } catch (RuntimeException e){
+            e.printStackTrace();
             return errors.stream().map(TSError::toString).toList();
         }
 

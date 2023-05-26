@@ -128,7 +128,7 @@ public class OperationHelper {
             case BIG_INT -> {
                 int value = getIntBigPart(result.value);
                 value++;
-                result.value = String.valueOf(value);
+                result.value = value+"n";
             }
         }
 
@@ -144,7 +144,7 @@ public class OperationHelper {
             case BIG_INT -> {
                 int value = getIntBigPart(result.value);
                 value--;
-                result.value = String.valueOf(value);
+                result.value = value+"n";
             }
         }
     }

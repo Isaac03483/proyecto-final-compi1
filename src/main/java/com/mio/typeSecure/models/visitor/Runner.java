@@ -969,7 +969,7 @@ public class Runner extends Visitor{
 
             }
 
-            content.append(result.value);
+            content.append(" ").append(result.value);
         });
         out.add(content.toString());
     }
@@ -1541,17 +1541,6 @@ public class Runner extends Visitor{
                             ifInstruction.line,
                             ifInstruction.column,
                             "No se pudo realizar la comparación."
-                    )
-            );
-            return null;
-        }
-
-        if(operation.variableType != VariableType.BOOLEAN){
-            this.errorList.add(
-                    new TSError(
-                            ifInstruction.line,
-                            ifInstruction.column,
-                            "La operación debe ser tipo BOOLEAN."
                     )
             );
             return null;
@@ -2353,6 +2342,10 @@ public class Runner extends Visitor{
                         );
                         return null;
                     }
+                    double indexValue = Double.parseDouble(indexVar.value);
+
+                    indexVar.value = indexValue % 1 == 0 ? String.valueOf((int)indexValue): indexVar.value;
+
                     int index = Integer.parseInt(indexVar.value);
                     result.variableType = VariableType.STRING;
                     result.value = String.valueOf(value.value.charAt(index));
